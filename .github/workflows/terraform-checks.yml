@@ -1,16 +1,23 @@
-name: Terraform Checks
+name: Terraform Validations
 
 on:
   pull_request:
     branches: [main]
-  workflow_dispatch: 
 
 jobs:
-  build:
-    name: Terraform Validations
+  validate:
+    name: Terraform Validate
     runs-on: ubuntu-latest
 
     steps:
-    #run basic hello world
-    - name: Echo Terraform
-      run: echo hello terraform world
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Terraform
+      run: hashicorp/setup-terraform@v1
+
+    - name: Terraform init
+      run: terraform init
+
+    - name: Terraform validate
+      run: terraform validate

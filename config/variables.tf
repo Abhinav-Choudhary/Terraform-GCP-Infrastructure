@@ -31,7 +31,7 @@ variable "auto_create_subnet" {
 variable "delete_default_routes" {
   type = bool
   description = "Specify whether default routes should be created"
-  default = false
+  default = true
 }
 
 variable "ip_cidr_range_webapp" {
@@ -70,50 +70,8 @@ variable "webapp_route_name" {
   default = "webapp-route"
 }
 
-variable "health_check_name" {
+variable "internet_gateway" {
   type = string
-  description = "Name for health check api"
-  default = "proxy-health-check"
-}
-
-variable "health_check_interval" {
-  type = number
-  description = "Set how often (in seconds) to send a health check"
-  default = 1
-}
-
-variable "health_check_timeout" {
-  type = number
-  description = "Set how long (in seconds) to wait before claiming failure."
-  default = 1
-}
-
-variable "health_check_port" {
-  type = string
-  description = "The TCP port number for the TCP health check request."
-  default = "80"
-}
-
-variable "backend_name" {
-  type = string
-  description = "Name for backend service"
-  default = "compute-backend"
-}
-
-variable "forwarding_rule_name" {
-  type = string
-  description = "Name for forwarding rule"
-  default = "compute-forwarding-rule"
-}
-
-variable "forwarding_load_balancing_scheme" {
-  type = string
-  description = "Specifies the forwarding rule type"
-  default = "INTERNAL"
-}
-
-variable "forwarding_all_ports" {
-  type = bool
-  description = "Set the value of all ports field for forwarding rule"
-  default = true
+  description = "Set the default internet gateway"
+  default = "default-internet-gateway"
 }

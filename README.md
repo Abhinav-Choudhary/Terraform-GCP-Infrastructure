@@ -15,3 +15,4 @@ Following Google Cloud Api's have been enabled for this project:
   - Perform validation checks: terraform validate
   - Create execution plan: terraform plan
   - Apply changes mentioned in execution plan: terraform apply
+  - Destroy existing vpc: terraform destroy

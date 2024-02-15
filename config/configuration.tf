@@ -1,15 +1,15 @@
 provider "google" {
   project = var.project
-  region = var.region
+  region  = var.region
 }
 
 # Create the network
 resource "google_compute_network" "vpc" {
-  name = var.network_name
-  auto_create_subnetworks = false
-  routing_mode = "REGIONAL"
-  project = var.project
-  delete_default_routes_on_create = true
+  name                              = var.network_name
+  auto_create_subnetworks           = var.auto_create_subnet
+  routing_mode                      = var.routing_mode
+  project                           = var.project
+  delete_default_routes_on_create   = var.delete_default_routes
 }
 
 # Create webapp subnet
@@ -18,7 +18,7 @@ resource "google_compute_subnetwork" "webapp_subnet" {
   network       = google_compute_network.vpc.name
   ip_cidr_range = var.ip_cidr_range_webapp
   region        = var.region
-  project = var.project
+  project       = var.project
 }
 
 # Create db subnet
@@ -27,25 +27,25 @@ resource "google_compute_subnetwork" "db_subnet" {
   network       = google_compute_network.vpc.name
   ip_cidr_range = var.ip_cidr_range_db
   region        = var.region
-  project = var.project
+  project       = var.project
 }
 
 resource "google_compute_health_check" "health_check" {
   provider           = google-beta
   name               = var.health_check_name
-  project = var.project
-  check_interval_sec = 1
-  timeout_sec        = 1
+  project            = var.project
+  check_interval_sec = var.health_check_interval
+  timeout_sec        = var.health_check_timeout
 
   tcp_health_check {
-    port = "80"
+    port = var.health_check_port
   }
 }
 
 resource "google_compute_region_backend_service" "backend" {
   provider      = google-beta
   name          = var.backend_name
-  project = var.project
+  project       = var.project
   region        = var.region
   health_checks = [google_compute_health_check.health_check.id]
 }
@@ -56,8 +56,8 @@ resource "google_compute_forwarding_rule" "vpc_forwarding_rule" {
   name     = var.forwarding_rule_name
   region   = var.region
 
-  load_balancing_scheme = "INTERNAL"
-  all_ports             = true
+  load_balancing_scheme = var.forwarding_load_balancing_scheme
+  all_ports             = var.forwarding_all_ports
   network               = google_compute_network.vpc.name
   subnetwork            = google_compute_subnetwork.webapp_subnet.name
   backend_service       = google_compute_region_backend_service.backend.id 
@@ -67,7 +67,7 @@ resource "google_compute_forwarding_rule" "vpc_forwarding_rule" {
 resource "google_compute_route" "webapp_route" {
   provider     = google
   name         = var.webapp_route_name
-  dest_range   = "0.0.0.0/0"
+  dest_range   = var.destination_range
   network      = google_compute_network.vpc.name
   next_hop_ilb = google_compute_forwarding_rule.vpc_forwarding_rule.ip_address
 }

@@ -10,9 +10,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - name: Checkout code
       uses: actions/checkout@v3
 
+      # Set up Terraform, perform init and validate commands to verify files
     - name: Set up Terraform
       uses: hashicorp/setup-terraform@v1
 

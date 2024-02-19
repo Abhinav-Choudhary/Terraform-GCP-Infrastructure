@@ -10,7 +10,6 @@ resource "google_compute_network" "vpc" {
   routing_mode                      = var.routing_mode
   project                           = var.project
   delete_default_routes_on_create   = var.delete_default_routes
-}
 
 # Create webapp subnet
 resource "google_compute_subnetwork" "webapp_subnet" {

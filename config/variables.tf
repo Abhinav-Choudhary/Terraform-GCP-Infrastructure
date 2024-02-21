@@ -1,7 +1,7 @@
 variable "project" {
   type = string
   description = "GCP Project ID"
-  default = "northeastern-cloud"
+  default = "csye6225-abhinav-dev"
 }
 
 variable "region" {
@@ -74,4 +74,40 @@ variable "internet_gateway" {
   type = string
   description = "Set the default internet gateway"
   default = "default-internet-gateway"
+}
+
+variable "tags" {
+  type = list(string)
+  description = "Tags for http traffic"
+  default = [ "webapp" ]
+}
+
+variable "firewall_name" {
+  type = string
+  description = "Name for http firewall"
+  default = "webapp-firewall"
+}
+
+variable "firewall_tcp_allow_ports" {
+  type = list(string)
+  description = "Set which ports http firewall listens to"
+  default = [ "8080" ]
+}
+
+variable "firewall_tcp_deny_posts" {
+  type =  list(string)
+  description = "Set which ports http firewall deny's"
+  default = [ "22" ]
+}
+
+variable "ping_protocol" {
+  type = string
+  description = "protocol for ping"
+  default = "icmp"
+}
+
+variable "http_protocol" {
+  type = string
+  description = "protocol for http requests"
+  default = "tcp"
 }

@@ -41,41 +41,38 @@ resource "google_compute_route" "webapp_route" {
   depends_on       = [google_compute_subnetwork.webapp_subnet]
 }
 
-resource "google_compute_firewall" "default" {
+resource "google_compute_firewall" "webapp_firewall" {
   name    = var.firewall_name
   network = google_compute_network.vpc.name
-  allow {
-    protocol = var.ping_protocol
-  }
   allow {
     protocol = var.http_protocol
     ports    = var.firewall_tcp_allow_ports
   }
-  source_tags = var.tags
-  source_ranges = ["0.0.0.0/0"]
+  source_tags   = var.tags
+  source_ranges = var.firewall_source_ranges
 }
 
-resource "google_compute_address" "static" {
-  name = "ipv4-address"
+resource "google_compute_address" "webapp_address" {
+  name = var.compute_address_name
 }
 
 resource "google_compute_instance" "webapp_instance" {
-  name         = "csye6225-instance"
-  machine_type = "e2-small"
-  zone         = "us-east1-b"
-  tags = var.tags
+  name         = var.compute_instance_name
+  machine_type = var.instance_machine_type
+  zone         = var.instance_zone
+  tags         = var.tags
 
   boot_disk {
     initialize_params {
-      image = "csye6225-app-image"
-      size  = 100
-      type  = "pd-balanced"
+      image = var.instance_app_image_family
+      size  = var.instance_disk_size
+      type  = var.instance_disk_type
     }
   }
   network_interface {
     subnetwork = google_compute_subnetwork.webapp_subnet.self_link
     access_config {
-    nat_ip = google_compute_address.static.address
-  }
+      nat_ip = google_compute_address.webapp_address.address
+    }
   }
 }

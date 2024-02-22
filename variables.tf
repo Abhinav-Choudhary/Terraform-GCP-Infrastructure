@@ -88,10 +88,22 @@ variable "firewall_name" {
   default     = "webapp-firewall"
 }
 
+variable "firewall_deny_name" {
+  type        = string
+  description = "Name for http firewall"
+  default     = "webapp-firewall-deny"
+}
+
 variable "firewall_tcp_allow_ports" {
   type        = list(string)
   description = "Set which ports http firewall listens to"
   default     = ["8080"]
+}
+
+variable "firewall_allow_priority" {
+  type = number
+  description = "Set priority for allow firewall rule"
+  default = 900
 }
 
 variable "http_protocol" {

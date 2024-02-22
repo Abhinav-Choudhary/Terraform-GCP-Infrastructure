@@ -50,6 +50,17 @@ resource "google_compute_firewall" "webapp_firewall" {
   }
   source_tags   = var.tags
   source_ranges = var.firewall_source_ranges
+  priority = var.firewall_allow_priority
+}
+
+resource "google_compute_firewall" "webapp_firewall_deny" {
+  name    = var.firewall_deny_name
+  network = google_compute_network.vpc.name
+  deny {
+    protocol = var.http_protocol
+  }
+  source_tags   = var.tags
+  source_ranges = var.firewall_source_ranges
 }
 
 resource "google_compute_address" "webapp_address" {

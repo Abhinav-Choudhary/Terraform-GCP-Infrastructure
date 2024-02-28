@@ -101,9 +101,9 @@ variable "firewall_tcp_allow_ports" {
 }
 
 variable "firewall_allow_priority" {
-  type = number
+  type        = number
   description = "Set priority for allow firewall rule"
-  default = 900
+  default     = 900
 }
 
 variable "http_protocol" {

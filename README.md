@@ -4,6 +4,7 @@ Repository for course CSYE 6225 Network Structures and Cloud Computing offered b
 # Enabled Api's
 Following Google Cloud Api's have been enabled for this project:
 - Compute Engine API
+- Service Networking API
 
 # How to run the application
 - Install Gcloud cli and Terraform

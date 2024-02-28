@@ -23,11 +23,69 @@ resource "google_compute_subnetwork" "webapp_subnet" {
 
 # Create db subnet
 resource "google_compute_subnetwork" "db_subnet" {
-  name          = var.db_subnet_name
-  network       = google_compute_network.vpc.name
-  ip_cidr_range = var.ip_cidr_range_db
-  region        = var.region
+  name                     = var.db_subnet_name
+  network                  = google_compute_network.vpc.name
+  ip_cidr_range            = var.ip_cidr_range_db
+  region                   = var.region
+  project                  = var.project
+  private_ip_google_access = true
+}
+
+resource "google_compute_global_address" "default" {
   project       = var.project
+  name          = "global-psconnect-ip"
+  address_type  = "INTERNAL"
+  purpose       = "VPC_PEERING"
+  prefix_length = 16
+  network       = google_compute_network.vpc.id
+}
+
+resource "google_service_networking_connection" "default" {
+  network                 = google_compute_network.vpc.id
+  service                 = "servicenetworking.googleapis.com"
+  reserved_peering_ranges = [google_compute_global_address.default.name]
+}
+
+resource "random_id" "db_name_suffix" {
+  byte_length = 4
+}
+
+resource "google_sql_database_instance" "my_instance" {
+  name                = "mysql-instance-${random_id.db_name_suffix.hex}"
+  database_version    = "MYSQL_8_0"
+  region              = var.region
+  deletion_protection = false
+  depends_on          = [google_service_networking_connection.default]
+  settings {
+    tier = "db-f1-micro"
+
+    availability_type = "REGIONAL"
+    disk_type         = "pd-ssd"
+    disk_size         = "100"
+    disk_autoresize   = false
+
+    ip_configuration {
+      ipv4_enabled                                  = false
+      private_network                               = google_compute_network.vpc.id
+      enable_private_path_for_google_cloud_services = true
+    }
+
+    backup_configuration {
+      binary_log_enabled = true
+      enabled            = true
+    }
+  }
+}
+
+resource "random_password" "password" {
+  length           = 16
+  special          = true
+  override_special = "!#$%&*()-_=+[]{}<>:?"
+}
+resource "google_sql_user" "users" {
+  name     = "webapp"
+  instance = google_sql_database_instance.my_instance.name
+  password = random_password.password.result
 }
 
 # Create a route for webapp subnet
@@ -50,7 +108,7 @@ resource "google_compute_firewall" "webapp_firewall" {
   }
   source_tags   = var.tags
   source_ranges = var.firewall_source_ranges
-  priority = var.firewall_allow_priority
+  priority      = var.firewall_allow_priority
 }
 
 resource "google_compute_firewall" "webapp_firewall_deny" {
@@ -85,5 +143,27 @@ resource "google_compute_instance" "webapp_instance" {
     access_config {
       nat_ip = google_compute_address.webapp_address.address
     }
+  }
+  metadata = {
+    startup-script = <<-EOF
+#!/bin/bash
+
+if [ ! -f "/opt/db.properties" ] 
+then
+sudo touch /opt/db.properties
+
+sudo echo "spring.datasource.url=jdbc:mysql://${google_sql_database_instance.my_instance.first_ip_address}:3306/${google_sql_database_instance.my_instance.name}?createDatabaseIfNotExist=true" >> /opt/db.properties
+sudo echo "spring.datasource.username=${google_sql_user.users.name}" >> /opt/db.properties
+sudo echo "spring.datasource.password=${google_sql_user.users.password}" >> /opt/db.properties
+sudo echo "spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver" >> /opt/db.properties
+sudo echo "spring.jpa.hibernate.ddl-auto=update" >> /opt/db.properties
+sudo echo "spring.jpa.show-sql=true" >> /opt/db.properties
+sudo echo "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL8Dialect" >> /opt/db.properties
+
+sudo chown -R csye6225:csye6225 /opt/db.properties
+else
+sudo echo "db.properties already exists" >> /var/log/csye6225/app.log
+fi
+EOF
   }
 }

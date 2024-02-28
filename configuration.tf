@@ -31,6 +31,7 @@ resource "google_compute_subnetwork" "db_subnet" {
   private_ip_google_access = var.private_ip_google_access
 }
 
+# Create the compute global address
 resource "google_compute_global_address" "webapp_global_address" {
   project       = var.project
   name          = var.global_address_name
@@ -40,16 +41,19 @@ resource "google_compute_global_address" "webapp_global_address" {
   network       = google_compute_network.vpc.id
 }
 
+# Add service networking connection
 resource "google_service_networking_connection" "webapp_service_networking_connection" {
   network                 = google_compute_network.vpc.id
   service                 = var.service_networking_connection_service
   reserved_peering_ranges = [google_compute_global_address.webapp_global_address.name]
 }
 
+# Generate random id for CloudSQL instance name
 resource "random_id" "db_instance_name_suffix" {
   byte_length = var.db_instance_name_suffix_length
 }
 
+# Setup CloudSQL database
 resource "google_sql_database_instance" "my_instance" {
   name                = "${var.sql_database_instance_name}-${random_id.db_instance_name_suffix.hex}"
   database_version    = var.sql_database_instance_version
@@ -77,11 +81,14 @@ resource "google_sql_database_instance" "my_instance" {
   }
 }
 
+# Generate random password for CloudSQL users
 resource "random_password" "password" {
   length           = var.password_length
   special          = var.password_special
   override_special = var.password_override_special
 }
+
+# Create CloudSQL user
 resource "google_sql_user" "users" {
   name     = var.sql_user_name
   instance = google_sql_database_instance.my_instance.name
@@ -111,6 +118,7 @@ resource "google_compute_firewall" "webapp_firewall" {
   priority      = var.firewall_allow_priority
 }
 
+# Add firewall rule to deny every port in tcp
 resource "google_compute_firewall" "webapp_firewall_deny" {
   name    = var.firewall_deny_name
   network = google_compute_network.vpc.name
@@ -121,10 +129,12 @@ resource "google_compute_firewall" "webapp_firewall_deny" {
   source_ranges = var.firewall_source_ranges
 }
 
+# External address for webapp subnet
 resource "google_compute_address" "webapp_address" {
   name = var.compute_address_name
 }
 
+#VM Instance for webapp
 resource "google_compute_instance" "webapp_instance" {
   name         = var.compute_instance_name
   machine_type = var.instance_machine_type

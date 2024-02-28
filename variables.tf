@@ -159,3 +159,141 @@ variable "instance_disk_type" {
   description = "Set default boot disk type for VM Instance"
   default     = "pd-balanced"
 }
+
+variable "private_ip_google_access" {
+  type        = bool
+  description = "Set value for private_ip_google_access"
+  default     = true
+}
+
+variable "global_address_name" {
+  type        = string
+  description = "Name for google_compute_global_address"
+  default     = "global-psconnect-ip"
+}
+
+variable "global_address_type" {
+  type        = string
+  description = "Address type for google_compute_global_address"
+  default     = "INTERNAL"
+}
+
+variable "global_address_purpose" {
+  type        = string
+  description = "Purpose for google_compute_global_address"
+  default     = "VPC_PEERING"
+}
+
+variable "global_address_prefix_length" {
+  type        = number
+  description = "Prefix length for google_compute_global_address"
+  default     = 16
+}
+
+variable "service_networking_connection_service" {
+  type        = string
+  description = "Service for google_service_networking_connection"
+  default     = "servicenetworking.googleapis.com"
+}
+
+variable "db_instance_name_suffix_length" {
+  type        = number
+  description = "Byte Length for random_id"
+  default     = 4
+}
+
+variable "sql_database_instance_name" {
+  type        = string
+  description = "Name for google_sql_database_instance"
+  default     = "mysql-instance"
+}
+
+variable "sql_database_instance_version" {
+  type        = string
+  description = "MySQL version for google_sql_database_instance"
+  default     = "MYSQL_8_0"
+}
+
+variable "sql_database_instance_deletion_protection" {
+  type        = bool
+  description = "Set deletion protection for google_sql_database_instance"
+  default     = false
+}
+
+variable "sql_database_instance_tier" {
+  type        = string
+  description = "Tier for google_sql_database_instance"
+  default     = "db-f1-micro"
+}
+
+variable "sql_database_instance_availability_type" {
+  type        = string
+  description = "Availability type for google_sql_database_instance"
+  default     = "REGIONAL"
+}
+
+variable "sql_database_instance_disk_type" {
+  type        = string
+  description = "disk type for google_sql_database_instance"
+  default     = "pd-ssd"
+}
+
+variable "sql_database_instance_disk_size" {
+  type        = string
+  description = "Disk size for google_sql_database_instance"
+  default     = "100"
+}
+
+variable "sql_database_instance_disk_autoresize" {
+  type        = bool
+  description = "Auto resize for google_sql_database_instance"
+  default     = false
+}
+
+variable "sql_database_instance_ipv4_enabled" {
+  type        = bool
+  description = "Set Ipv4 for google_sql_database_instance"
+  default     = false
+}
+
+variable "sql_database_instance_enable_private_path" {
+  type        = bool
+  description = "Set enable private path for google_sql_database_instance"
+  default     = true
+}
+
+variable "sql_database_instance_binary_logs" {
+  type        = bool
+  description = "Set Binary Logs for google_sql_database_instance"
+  default     = true
+}
+
+variable "sql_database_instance_backup_enabled" {
+  type        = bool
+  description = "Set whether to enable backup for google_sql_database_instance"
+  default     = true
+}
+
+variable "password_length" {
+  type        = number
+  description = "Length for random password"
+  default     = 16
+}
+
+variable "password_special" {
+  type        = bool
+  description = "Set whether to use special characters for random password"
+  default     = true
+}
+
+variable "password_override_special" {
+  type        = string
+  description = "Override special for random password"
+  default     = "!#$%&*()-_=+[]{}<>:?"
+}
+
+variable "sql_user_name" {
+  type        = string
+  description = "Name for CloudSQL user"
+  default     = "webapp"
+}

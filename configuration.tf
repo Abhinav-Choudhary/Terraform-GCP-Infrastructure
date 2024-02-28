@@ -28,62 +28,62 @@ resource "google_compute_subnetwork" "db_subnet" {
   ip_cidr_range            = var.ip_cidr_range_db
   region                   = var.region
   project                  = var.project
-  private_ip_google_access = true
+  private_ip_google_access = var.private_ip_google_access
 }
 
-resource "google_compute_global_address" "default" {
+resource "google_compute_global_address" "webapp_global_address" {
   project       = var.project
-  name          = "global-psconnect-ip"
-  address_type  = "INTERNAL"
-  purpose       = "VPC_PEERING"
-  prefix_length = 16
+  name          = var.global_address_name
+  address_type  = var.global_address_type
+  purpose       = var.global_address_purpose
+  prefix_length = var.global_address_prefix_length
   network       = google_compute_network.vpc.id
 }
 
-resource "google_service_networking_connection" "default" {
+resource "google_service_networking_connection" "webapp_service_networking_connection" {
   network                 = google_compute_network.vpc.id
-  service                 = "servicenetworking.googleapis.com"
-  reserved_peering_ranges = [google_compute_global_address.default.name]
+  service                 = var.service_networking_connection_service
+  reserved_peering_ranges = [google_compute_global_address.webapp_global_address.name]
 }
 
-resource "random_id" "db_name_suffix" {
-  byte_length = 4
+resource "random_id" "db_instance_name_suffix" {
+  byte_length = var.db_instance_name_suffix_length
 }
 
 resource "google_sql_database_instance" "my_instance" {
-  name                = "mysql-instance-${random_id.db_name_suffix.hex}"
-  database_version    = "MYSQL_8_0"
+  name                = "${var.sql_database_instance_name}-${random_id.db_instance_name_suffix.hex}"
+  database_version    = var.sql_database_instance_version
   region              = var.region
-  deletion_protection = false
-  depends_on          = [google_service_networking_connection.default]
+  deletion_protection = var.sql_database_instance_deletion_protection
+  depends_on          = [google_service_networking_connection.webapp_service_networking_connection]
   settings {
-    tier = "db-f1-micro"
+    tier = var.sql_database_instance_tier
 
-    availability_type = "REGIONAL"
-    disk_type         = "pd-ssd"
-    disk_size         = "100"
-    disk_autoresize   = false
+    availability_type = var.sql_database_instance_availability_type
+    disk_type         = var.sql_database_instance_disk_type
+    disk_size         = var.sql_database_instance_disk_size
+    disk_autoresize   = var.sql_database_instance_disk_autoresize
 
     ip_configuration {
-      ipv4_enabled                                  = false
+      ipv4_enabled                                  = var.sql_database_instance_ipv4_enabled
       private_network                               = google_compute_network.vpc.id
-      enable_private_path_for_google_cloud_services = true
+      enable_private_path_for_google_cloud_services = var.sql_database_instance_enable_private_path
     }
 
     backup_configuration {
-      binary_log_enabled = true
-      enabled            = true
+      binary_log_enabled = var.sql_database_instance_binary_logs
+      enabled            = var.sql_database_instance_backup_enabled
     }
   }
 }
 
 resource "random_password" "password" {
-  length           = 16
-  special          = true
-  override_special = "!#$%&*()-_=+[]{}<>:?"
+  length           = var.password_length
+  special          = var.password_special
+  override_special = var.password_override_special
 }
 resource "google_sql_user" "users" {
-  name     = "webapp"
+  name     = var.sql_user_name
   instance = google_sql_database_instance.my_instance.name
   password = random_password.password.result
 }

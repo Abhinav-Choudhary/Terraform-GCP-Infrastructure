@@ -54,7 +54,7 @@ resource "random_id" "db_instance_name_suffix" {
 }
 
 # Setup CloudSQL database
-resource "google_sql_database_instance" "my_instance" {
+resource "google_sql_database_instance" "database_instance" {
   name                = "${var.sql_database_instance_name}-${random_id.db_instance_name_suffix.hex}"
   database_version    = var.sql_database_instance_version
   region              = var.region
@@ -81,6 +81,12 @@ resource "google_sql_database_instance" "my_instance" {
   }
 }
 
+# Create a database using database instance
+resource "google_sql_database" "database" {
+  name     = var.sql_database_name
+  instance = google_sql_database_instance.database_instance.name
+}
+
 # Generate random password for CloudSQL users
 resource "random_password" "password" {
   length           = var.password_length
@@ -91,7 +97,7 @@ resource "random_password" "password" {
 # Create CloudSQL user
 resource "google_sql_user" "users" {
   name     = var.sql_user_name
-  instance = google_sql_database_instance.my_instance.name
+  instance = google_sql_database_instance.database_instance.name
   password = random_password.password.result
 }
 
@@ -162,7 +168,7 @@ if [ ! -f "/opt/db.properties" ]
 then
 sudo touch /opt/db.properties
 
-sudo echo "spring.datasource.url=jdbc:mysql://${google_sql_database_instance.my_instance.first_ip_address}:3306/${google_sql_database_instance.my_instance.name}?createDatabaseIfNotExist=true" >> /opt/db.properties
+sudo echo "spring.datasource.url=jdbc:mysql://${google_sql_database_instance.database_instance.first_ip_address}:3306/${google_sql_database.database.name}?createDatabaseIfNotExist=true" >> /opt/db.properties
 sudo echo "spring.datasource.username=${google_sql_user.users.name}" >> /opt/db.properties
 sudo echo "spring.datasource.password=${google_sql_user.users.password}" >> /opt/db.properties
 sudo echo "spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver" >> /opt/db.properties

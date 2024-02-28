@@ -205,7 +205,7 @@ variable "db_instance_name_suffix_length" {
 variable "sql_database_instance_name" {
   type        = string
   description = "Name for google_sql_database_instance"
-  default     = "mysql-instance"
+  default     = "webapp-instance"
 }
 
 variable "sql_database_instance_version" {
@@ -272,6 +272,12 @@ variable "sql_database_instance_backup_enabled" {
   type        = bool
   description = "Set whether to enable backup for google_sql_database_instance"
   default     = true
+}
+
+variable "sql_database_name" {
+  type        = string
+  description = "Name for google_sql_database"
+  default     = "webapp"
 }
 
 variable "password_length" {

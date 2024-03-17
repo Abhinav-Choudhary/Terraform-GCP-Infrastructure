@@ -97,7 +97,7 @@ variable "firewall_deny_name" {
 variable "firewall_tcp_allow_ports" {
   type        = list(string)
   description = "Set which ports http firewall listens to"
-  default     = ["8080"]
+  default     = ["8080","22"]
 }
 
 variable "firewall_allow_priority" {
@@ -302,4 +302,34 @@ variable "sql_user_name" {
   type        = string
   description = "Name for CloudSQL user"
   default     = "webapp"
+}
+
+variable "logging_account_id" {
+  type        = string
+  description = "Name for Logging service account account id"
+  default     = "logging-service-account"
+}
+
+variable "logging_display_name" {
+  type        = string
+  description = "Name for Logging service account display name"
+  default     = "Logging Service Account"
+}
+
+variable "logging_admin_role" {
+  type        = string
+  description = "Name for Logging service account admin role"
+  default     = "roles/logging.admin"
+}
+
+variable "logging_monitoring_metric_writer_role" {
+  type        = string
+  description = "Name for Logging service account monitoring metric writer role"
+  default     = "roles/monitoring.metricWriter"
+}
+
+variable "compute_instance_service_account_scopes" {
+  type        = list(string)
+  description = "Scopes for compute instance service account"
+  default     = ["cloud-platform"]
 }

@@ -140,12 +140,41 @@ resource "google_compute_address" "webapp_address" {
   name = var.compute_address_name
 }
 
+# Create service account
+resource "google_service_account" "logging_service_account" {
+  account_id   = var.logging_account_id
+  display_name = var.logging_display_name
+}
+
+# Add logging admin role to service account
+resource "google_project_iam_binding" "logging_admin" {
+  project = var.project
+  role    = var.logging_admin_role
+  depends_on = [ google_service_account.logging_service_account ]
+
+  members = [
+    "serviceAccount:${google_service_account.logging_service_account.email}"
+  ]
+}
+
+# Add monitoring metric writer role to service account
+resource "google_project_iam_binding" "monitoring_metric_writer" {
+  project = var.project
+  role    = var.logging_monitoring_metric_writer_role
+  depends_on = [ google_service_account.logging_service_account ]
+
+  members = [
+    "serviceAccount:${google_service_account.logging_service_account.email}"
+  ]
+}
+
 #VM Instance for webapp
 resource "google_compute_instance" "webapp_instance" {
   name         = var.compute_instance_name
   machine_type = var.instance_machine_type
   zone         = var.instance_zone
   tags         = var.tags
+  depends_on = [ google_project_iam_binding.logging_admin, google_project_iam_binding.monitoring_metric_writer ]
 
   boot_disk {
     initialize_params {
@@ -181,5 +210,9 @@ else
 sudo echo "db.properties already exists" >> /var/log/csye6225/app.log
 fi
 EOF
+  }
+  service_account {
+    email  = google_service_account.logging_service_account.email
+    scopes = var.compute_instance_service_account_scopes
   }
 }

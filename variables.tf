@@ -97,7 +97,7 @@ variable "firewall_deny_name" {
 variable "firewall_tcp_allow_ports" {
   type        = list(string)
   description = "Set which ports http firewall listens to"
-  default     = ["8080"]
+  default     = ["8080", "22"]
 }
 
 variable "firewall_allow_priority" {
@@ -133,7 +133,7 @@ variable "compute_instance_name" {
 variable "instance_machine_type" {
   type        = string
   description = "Set machine type for VM Instance"
-  default     = "e2-small"
+  default     = "e2-medium"
 }
 
 variable "instance_zone" {
@@ -295,7 +295,7 @@ variable "password_special" {
 variable "password_override_special" {
   type        = string
   description = "Override special for random password"
-  default     = "!#$%&*()-_=+[]{}<>:?"
+  default     = "!#%&*-_=+[]{}<>:?"
 }
 
 variable "sql_user_name" {

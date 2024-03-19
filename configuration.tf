@@ -148,9 +148,9 @@ resource "google_service_account" "logging_service_account" {
 
 # Add logging admin role to service account
 resource "google_project_iam_binding" "logging_admin" {
-  project = var.project
-  role    = var.logging_admin_role
-  depends_on = [ google_service_account.logging_service_account ]
+  project    = var.project
+  role       = var.logging_admin_role
+  depends_on = [google_service_account.logging_service_account]
 
   members = [
     "serviceAccount:${google_service_account.logging_service_account.email}"
@@ -159,9 +159,9 @@ resource "google_project_iam_binding" "logging_admin" {
 
 # Add monitoring metric writer role to service account
 resource "google_project_iam_binding" "monitoring_metric_writer" {
-  project = var.project
-  role    = var.logging_monitoring_metric_writer_role
-  depends_on = [ google_service_account.logging_service_account ]
+  project    = var.project
+  role       = var.logging_monitoring_metric_writer_role
+  depends_on = [google_service_account.logging_service_account]
 
   members = [
     "serviceAccount:${google_service_account.logging_service_account.email}"
@@ -174,7 +174,7 @@ resource "google_compute_instance" "webapp_instance" {
   machine_type = var.instance_machine_type
   zone         = var.instance_zone
   tags         = var.tags
-  depends_on = [ google_project_iam_binding.logging_admin, google_project_iam_binding.monitoring_metric_writer ]
+  depends_on   = [google_project_iam_binding.logging_admin, google_project_iam_binding.monitoring_metric_writer]
 
   boot_disk {
     initialize_params {

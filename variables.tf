@@ -97,7 +97,7 @@ variable "firewall_deny_name" {
 variable "firewall_tcp_allow_ports" {
   type        = list(string)
   description = "Set which ports http firewall listens to"
-  default     = ["8080", "22"]
+  default     = ["8080"]
 }
 
 variable "firewall_allow_priority" {

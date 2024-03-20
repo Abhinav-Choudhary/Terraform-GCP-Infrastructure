@@ -216,3 +216,11 @@ EOF
     scopes = var.compute_instance_service_account_scopes
   }
 }
+
+resource "google_dns_record_set" "webapp_a_record" {
+  name = var.dns_a_record_name
+  type = var.dns_a_record_type
+  ttl = var.dns_a_record_ttl
+  managed_zone = var.dns_a_record_managed_zone
+  rrdatas = [google_compute_instance.webapp_instance.network_interface[0].access_config[0].nat_ip]
+}

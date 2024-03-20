@@ -333,3 +333,27 @@ variable "compute_instance_service_account_scopes" {
   description = "Scopes for compute instance service account"
   default     = ["cloud-platform"]
 }
+
+variable "dns_a_record_name" {
+  type = string
+  description = "Domain name for A record"
+  default = "choudhary-abhinav.me."
+}
+
+variable "dns_a_record_type" {
+  type = string
+  description = "A record type"
+  default = "A"
+}
+
+variable "dns_a_record_ttl" {
+  type = number
+  description = "Time to live (in seconds) for domain dns"
+  default = 300
+}
+
+variable "dns_a_record_managed_zone" {
+  type = string
+  description = "DNS name for zone"
+  default = "choudhary-abhinav"
+}

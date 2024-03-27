@@ -487,7 +487,7 @@ variable "cloud_function_env_smtp_email" {
 variable "cloud_function_env_db_table" {
   type = string
   description = "DB Table Env variable for Webapp GCP cloud function"
-  default = "verify-user"
+  default = "verify_user"
 }
 
 variable "cloud_function_event_trigger_type" {

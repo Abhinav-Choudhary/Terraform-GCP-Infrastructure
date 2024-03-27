@@ -168,6 +168,25 @@ resource "google_project_iam_binding" "monitoring_metric_writer" {
   ]
 }
 
+resource "google_service_account" "pubsub_publisher" {
+  account_id   = var.pubsub_publisher_account_id
+  display_name = var.pubsub_publisher_display_name
+}
+
+resource "google_project_iam_binding" "publisher_role" {
+  project    = var.project
+  role       = var.pubsub_publisher_publisher_role
+  depends_on = [google_service_account.pubsub_publisher]
+
+  members = [
+    "serviceAccount:${google_service_account.pubsub_publisher.email}"
+  ]
+}
+
+resource "google_service_account_key" "pubsub_publisher_key" {
+  service_account_id = google_service_account.pubsub_publisher.id
+}
+
 #VM Instance for webapp
 resource "google_compute_instance" "webapp_instance" {
   name         = var.compute_instance_name
@@ -209,6 +228,9 @@ sudo chown -R csye6225:csye6225 /opt/db.properties
 else
 sudo echo "db.properties already exists" >> /var/log/csye6225/app.log
 fi
+
+sudo touch /opt/pubsub-service-account-key.json
+sudo echo '${base64decode(google_service_account_key.pubsub_publisher_key.private_key)}' >> /opt/pubsub-service-account-key.json
 EOF
   }
   service_account {
@@ -223,4 +245,110 @@ resource "google_dns_record_set" "webapp_a_record" {
   ttl = var.dns_a_record_ttl
   managed_zone = var.dns_a_record_managed_zone
   rrdatas = [google_compute_instance.webapp_instance.network_interface[0].access_config[0].nat_ip]
+}
+
+# Serverless Function
+
+# Creating topic for pub-sub
+resource "google_pubsub_topic" "webapp_topic" {
+  name = var.webapp_topic_name
+  message_retention_duration = var.webapp_topic_retention
+}
+
+# Creating a subscription for the topic 
+resource "google_pubsub_subscription" "webapp_topic_subscription" {
+  name   = var.webapp_topic_subscription_name
+  topic  = google_pubsub_topic.webapp_topic.name
+  depends_on = [ google_pubsub_topic.webapp_topic ]
+}
+
+resource "google_cloudfunctions2_function" "cloud_function" {
+  name        = var.cloud_function_name
+  location = var.region
+  description = var.cloud_function_description
+  depends_on = [ google_pubsub_topic.webapp_topic, google_sql_database_instance.database_instance, 
+                  google_sql_user.users, google_sql_database.database, google_vpc_access_connector.cloud_function_connector, 
+                  google_service_account.serverless_account]
+
+  build_config {
+    runtime = var.cloud_function_run_time
+    entry_point = var.cloud_function_entry_point
+    source {
+      storage_source {
+        bucket = var.cloud_function_source_bucket
+        object = var.cloud_function_source_object
+      }
+    }
+  }
+  service_config {
+    available_memory   = var.cloud_function_memory
+    timeout_seconds = var.cloud_function_timeout
+    max_instance_count = var.cloud_function_instance_count
+    vpc_connector = google_vpc_access_connector.cloud_function_connector.id
+    environment_variables = {
+      # SMTP Env variables
+      SMTP_HOST = var.cloud_function_env_smtp_host
+      SMTP_PORT = var.cloud_function_env_smtp_port
+      SMTP_USERNAME = var.cloud_function_env_smtp_username
+      SMTP_PASSWORD = var.cloud_function_env_smtp_password
+      SMTP_VERIFICATION_LINK = var.cloud_function_env_smtp_verification_link
+      SMTP_FROM_EMAIL = var.cloud_function_env_smtp_email
+
+      # MYSQL Env variables
+      DB_HOST_IP = google_sql_database_instance.database_instance.first_ip_address
+      DB_USER = google_sql_user.users.name
+      DB_PASSWORD = google_sql_user.users.password
+      DB_TABLE = var.cloud_function_env_db_table
+      DB_DATABASE = google_sql_database.database.name
+    }
+  }
+
+  event_trigger  {
+      event_type= var.cloud_function_event_trigger_type
+      pubsub_topic = google_pubsub_topic.webapp_topic.id
+      service_account_email = google_service_account.serverless_account.email
+  }
+}
+
+# IAM entry for all users to invoke the function
+resource "google_service_account" "serverless_account" {
+  account_id   = var.serverless_account_id
+  display_name = var.serverless_display_name
+}
+
+resource "google_project_iam_binding" "serverless_cloud_function_developer" {
+  project    = var.project
+  role       = var.serverless_cloud_function_developer_role
+  depends_on = [google_service_account.serverless_account]
+
+  members = [
+    "serviceAccount:${google_service_account.serverless_account.email}"
+  ]
+}
+
+resource "google_project_iam_binding" "serverless_cloud_sql_client" {
+  project    = var.project
+  role       = var.serverless_cloud_SQL_Client
+  depends_on = [google_service_account.serverless_account]
+
+  members = [
+    "serviceAccount:${google_service_account.serverless_account.email}"
+  ]
+}
+
+# VPC Serverless Connector 
+resource "google_compute_subnetwork" "mysql_connection" {
+  name          = var.mysql_connection_subnet_name
+  ip_cidr_range = var.mysql_connection_subnet_ip_cidr
+  region        = var.region
+  network       = google_compute_network.vpc.id
+}
+
+resource "google_vpc_access_connector" "cloud_function_connector" {
+  name          = var.vpc_access_connector_name
+  depends_on = [ google_compute_subnetwork.mysql_connection ]
+  subnet {
+    name = google_compute_subnetwork.mysql_connection.name
+  }
+  machine_type = var.vpc_access_connector_machine_type
 }

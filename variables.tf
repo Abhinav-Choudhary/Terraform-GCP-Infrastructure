@@ -357,3 +357,189 @@ variable "dns_a_record_managed_zone" {
   description = "DNS name for zone"
   default = "choudhary-abhinav"
 }
+
+variable "pubsub_publisher_account_id" {
+  type = string
+  description = "Account Id for Pub/Sub service account"
+  default = "pubsub-publisher"
+}
+
+variable "pubsub_publisher_display_name" {
+  type = string
+  description = "Display name for Pub/Sub service account"
+  default = "PubSub Publisher"
+}
+
+variable "pubsub_publisher_publisher_role" {
+  type = string
+  description = "Publisher role for Pub/Sub service account"
+  default = "roles/pubsub.publisher"
+}
+
+variable "webapp_topic_name" {
+  type = string
+  description = "Name for Webapp GCP topic"
+  default = "verify_email"
+}
+
+variable "webapp_topic_retention" {
+  type = string
+  description = "Retention for Webapp GCP topic"
+  default = "604800s"
+}
+
+variable "webapp_topic_subscription_name" {
+  type = string
+  description = "Name for Webapp GCP topic Subscription"
+  default = "subscriber"
+}
+
+variable "cloud_function_name" {
+  type = string
+  description = "Name for Webapp GCP cloud function"
+  default = "email-lambda-function"
+}
+
+variable "cloud_function_description" {
+  type = string
+  description = "Description for Webapp GCP cloud function"
+  default = "Function to handle user verification email processing"
+}
+
+variable "cloud_function_run_time" {
+  type = string
+  description = "Run time for Webapp GCP cloud function"
+  default = "python311"
+}
+
+variable "cloud_function_entry_point" {
+  type = string
+  description = "Entry point for Webapp GCP cloud function"
+  default = "lambda_function"
+}
+
+variable "cloud_function_source_bucket" {
+  type = string
+  description = "Source bucket for Webapp GCP cloud function"
+  default = "serverless-function-abhinav"
+}
+
+variable "cloud_function_source_object" {
+  type = string
+  description = "Source bucket object for Webapp GCP cloud function"
+  default = "index.zip"
+}
+
+variable "cloud_function_memory" {
+  type = string
+  description = "Availale memory object for Webapp GCP cloud function"
+  default = "128Mi"
+}
+
+variable "cloud_function_timeout" {
+  type = number
+  description = "Timeout (in seconds) for Webapp GCP cloud function"
+  default = 60
+}
+
+variable "cloud_function_instance_count" {
+  type = number
+  description = "Instance count for Webapp GCP cloud function"
+  default = 1
+}
+
+variable "cloud_function_env_smtp_host" {
+  type = string
+  description = "SMTP Host Env variable for Webapp GCP cloud function"
+  default = "smtp.mailgun.org"
+}
+
+variable "cloud_function_env_smtp_port" {
+  type = number
+  description = "SMTP Port Env variable for Webapp GCP cloud function"
+  default = 587
+}
+
+variable "cloud_function_env_smtp_username" {
+  type = string
+  description = "SMTP Username Env variable for Webapp GCP cloud function"
+  default = "postmaster@mail.choudhary-abhinav.me"
+}
+
+variable "cloud_function_env_smtp_password" {
+  type = string
+  description = "SMTP Password Env variable for Webapp GCP cloud function"
+  default = "df156c1458e29cddb1bf9bed1fdef297-f68a26c9-5ba9a9f5"
+}
+
+variable "cloud_function_env_smtp_verification_link" {
+  type = string
+  description = "SMTP Verification Link Env variable for Webapp GCP cloud function"
+  default = "http://choudhary-abhinav.me:8080/v1/verify"
+}
+
+variable "cloud_function_env_smtp_email" {
+  type = string
+  description = "SMTP Email Env variable for Webapp GCP cloud function"
+  default = "no-reply@choudhary-abhinav.me"
+}
+
+variable "cloud_function_env_db_table" {
+  type = string
+  description = "DB Table Env variable for Webapp GCP cloud function"
+  default = "verify-user"
+}
+
+variable "cloud_function_event_trigger_type" {
+  type = string
+  description = "Event Trigger Type for Webapp GCP cloud function"
+  default = "google.cloud.pubsub.topic.v1.messagePublished"
+}
+
+variable "serverless_account_id" {
+  type = string
+  description = "Account Id for Serverless service account"
+  default = "serverless-publisher"
+}
+
+variable "serverless_display_name" {
+  type = string
+  description = "Display name for Serverless service account"
+  default = "Serverless Publisher"
+}
+
+variable "serverless_cloud_function_developer_role" {
+  type = string
+  description = "Cloud Functiond Developer role for Serverless service account"
+  default = "roles/cloudfunctions.developer"
+}
+
+variable "serverless_cloud_SQL_Client" {
+  type = string
+  description = "Cloud SQL Client role for Serverless service account"
+  default = "roles/cloudsql.client"
+}
+
+variable "mysql_connection_subnet_name" {
+  type = string
+  description = "MySQL connection subnet name"
+  default = "mysql-connection"
+}
+
+variable "mysql_connection_subnet_ip_cidr" {
+  type = string
+  description = "MySQL connection subnet Ip CIDR range"
+  default = "10.8.0.0/28"
+}
+
+variable "vpc_access_connector_name" {
+  type = string
+  description = "VPC access connector name"
+  default = "vpc-connector"
+}
+
+variable "vpc_access_connector_machine_type" {
+  type = string
+  description = "VPC access connector Machine Type"
+  default = "e2-standard-4"
+}

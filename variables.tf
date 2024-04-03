@@ -796,6 +796,12 @@ variable "lb_forwarding_rule_network_tier" {
   default     = "STANDARD"
 }
 
+variable "ssl_cert_name" {
+  type        = string
+  description = "Name for ssl certificate"
+  default     = "abhinav-certificate"
+}
+
 variable "ssl_cert_certificate" {
   type        = string
   description = "Certificate path for ssl certificate"

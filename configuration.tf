@@ -14,11 +14,11 @@ resource "google_compute_network" "vpc" {
 
 # Create webapp subnet
 resource "google_compute_subnetwork" "webapp_subnet" {
-  name          = var.webapp_subnet_name
-  network       = google_compute_network.vpc.name
-  ip_cidr_range = var.ip_cidr_range_webapp
-  region        = var.region
-  project       = var.project
+  name                     = var.webapp_subnet_name
+  network                  = google_compute_network.vpc.name
+  ip_cidr_range            = var.ip_cidr_range_webapp
+  region                   = var.region
+  project                  = var.project
   private_ip_google_access = var.private_ip_google_access
 }
 
@@ -189,38 +189,38 @@ resource "google_service_account_key" "pubsub_publisher_key" {
 }
 
 resource "google_dns_record_set" "webapp_a_record" {
-  name = var.dns_a_record_name
-  type = var.dns_a_record_type
-  ttl = var.dns_a_record_ttl
+  name         = var.dns_a_record_name
+  type         = var.dns_a_record_type
+  ttl          = var.dns_a_record_ttl
   managed_zone = var.dns_a_record_managed_zone
-  rrdatas = [google_compute_address.lb_address.address]
+  rrdatas      = [google_compute_address.lb_address.address]
 }
 
 # Serverless Function
 
 # Creating topic for pub-sub
 resource "google_pubsub_topic" "webapp_topic" {
-  name = var.webapp_topic_name
+  name                       = var.webapp_topic_name
   message_retention_duration = var.webapp_topic_retention
 }
 
 # Creating a subscription for the topic 
 resource "google_pubsub_subscription" "webapp_topic_subscription" {
-  name   = var.webapp_topic_subscription_name
-  topic  = google_pubsub_topic.webapp_topic.name
-  depends_on = [ google_pubsub_topic.webapp_topic ]
+  name       = var.webapp_topic_subscription_name
+  topic      = google_pubsub_topic.webapp_topic.name
+  depends_on = [google_pubsub_topic.webapp_topic]
 }
 
 resource "google_cloudfunctions2_function" "cloud_function" {
   name        = var.cloud_function_name
-  location = var.region
+  location    = var.region
   description = var.cloud_function_description
-  depends_on = [ google_pubsub_topic.webapp_topic, google_sql_database_instance.database_instance, 
-                  google_sql_user.users, google_sql_database.database, google_vpc_access_connector.cloud_function_connector, 
-                  google_service_account.serverless_account]
+  depends_on = [google_pubsub_topic.webapp_topic, google_sql_database_instance.database_instance,
+    google_sql_user.users, google_sql_database.database, google_vpc_access_connector.cloud_function_connector,
+  google_service_account.serverless_account]
 
   build_config {
-    runtime = var.cloud_function_run_time
+    runtime     = var.cloud_function_run_time
     entry_point = var.cloud_function_entry_point
     source {
       storage_source {
@@ -231,31 +231,31 @@ resource "google_cloudfunctions2_function" "cloud_function" {
   }
   service_config {
     available_memory   = var.cloud_function_memory
-    timeout_seconds = var.cloud_function_timeout
+    timeout_seconds    = var.cloud_function_timeout
     max_instance_count = var.cloud_function_instance_count
-    vpc_connector = google_vpc_access_connector.cloud_function_connector.id
+    vpc_connector      = google_vpc_access_connector.cloud_function_connector.id
     environment_variables = {
       # SMTP Env variables
-      SMTP_HOST = var.cloud_function_env_smtp_host
-      SMTP_PORT = var.cloud_function_env_smtp_port
-      SMTP_USERNAME = var.cloud_function_env_smtp_username
-      SMTP_PASSWORD = var.cloud_function_env_smtp_password
+      SMTP_HOST              = var.cloud_function_env_smtp_host
+      SMTP_PORT              = var.cloud_function_env_smtp_port
+      SMTP_USERNAME          = var.cloud_function_env_smtp_username
+      SMTP_PASSWORD          = var.cloud_function_env_smtp_password
       SMTP_VERIFICATION_LINK = var.cloud_function_env_smtp_verification_link
-      SMTP_FROM_EMAIL = var.cloud_function_env_smtp_email
+      SMTP_FROM_EMAIL        = var.cloud_function_env_smtp_email
 
       # MYSQL Env variables
-      DB_HOST_IP = google_sql_database_instance.database_instance.first_ip_address
-      DB_USER = google_sql_user.users.name
+      DB_HOST_IP  = google_sql_database_instance.database_instance.first_ip_address
+      DB_USER     = google_sql_user.users.name
       DB_PASSWORD = google_sql_user.users.password
-      DB_TABLE = var.cloud_function_env_db_table
+      DB_TABLE    = var.cloud_function_env_db_table
       DB_DATABASE = google_sql_database.database.name
     }
   }
 
-  event_trigger  {
-      event_type= var.cloud_function_event_trigger_type
-      pubsub_topic = google_pubsub_topic.webapp_topic.id
-      service_account_email = google_service_account.serverless_account.email
+  event_trigger {
+    event_type            = var.cloud_function_event_trigger_type
+    pubsub_topic          = google_pubsub_topic.webapp_topic.id
+    service_account_email = google_service_account.serverless_account.email
   }
 }
 
@@ -294,8 +294,8 @@ resource "google_compute_subnetwork" "mysql_connection" {
 }
 
 resource "google_vpc_access_connector" "cloud_function_connector" {
-  name          = var.vpc_access_connector_name
-  depends_on = [ google_compute_subnetwork.mysql_connection ]
+  name       = var.vpc_access_connector_name
+  depends_on = [google_compute_subnetwork.mysql_connection]
   subnet {
     name = google_compute_subnetwork.mysql_connection.name
   }
@@ -304,27 +304,27 @@ resource "google_vpc_access_connector" "cloud_function_connector" {
 
 #  Regional instance template
 resource "google_compute_region_instance_template" "csye6225_template" {
-  name = var.compute_instance_name
-  region = var.region
-  machine_type = var.instance_machine_type
+  name           = var.compute_instance_name
+  region         = var.region
+  machine_type   = var.instance_machine_type
   can_ip_forward = var.compute_instance_can_ip_forward
-  tags = var.tags
-  depends_on   = [google_project_iam_binding.logging_admin, google_project_iam_binding.monitoring_metric_writer]
+  tags           = var.tags
+  depends_on     = [google_project_iam_binding.logging_admin, google_project_iam_binding.monitoring_metric_writer]
 
   disk {
     source_image = var.instance_app_image_family
-    auto_delete = var.compute_instance_auto_delete
-    boot = var.compute_instance_boot
+    auto_delete  = var.compute_instance_auto_delete
+    boot         = var.compute_instance_boot
 
   }
 
   network_interface {
-    network = google_compute_network.vpc.name
+    network    = google_compute_network.vpc.name
     subnetwork = google_compute_subnetwork.webapp_subnet.name
   }
 
   service_account {
-    email = google_service_account.logging_service_account.email
+    email  = google_service_account.logging_service_account.email
     scopes = var.compute_instance_service_account_scopes
   }
 
@@ -359,65 +359,61 @@ resource "google_compute_region_health_check" "webapp_health_check" {
 
   name = var.health_check_name
 
-  timeout_sec = var.health_check_timeout_sec
-  check_interval_sec = var.health_check_check_interval_sec
-  healthy_threshold = var.health_check_healthy_threshold
+  timeout_sec         = var.health_check_timeout_sec
+  check_interval_sec  = var.health_check_check_interval_sec
+  healthy_threshold   = var.health_check_healthy_threshold
   unhealthy_threshold = var.health_check_unhealthy_threshold
 
   http_health_check {
-    port = var.health_check_http_port
-    request_path = var.health_check_http_request_path
+    port               = var.health_check_http_port
+    request_path       = var.health_check_http_request_path
     port_specification = var.health_check_http_port_specification
   }
 
   log_config {
     enable = var.health_check_log_enabled
   }
-  
 }
 
 # Regional Autoscaler
 resource "google_compute_region_autoscaler" "webapp_autoscaler" {
 
-  name = var.autoscaler_name
+  name   = var.autoscaler_name
   region = var.region
   target = google_compute_region_instance_group_manager.csye6225_mig.id
   autoscaling_policy {
-    max_replicas = var.autoscaler_max_replica
-    min_replicas = var.autoscaler_min_replica
+    max_replicas    = var.autoscaler_max_replica
+    min_replicas    = var.autoscaler_min_replica
     cooldown_period = var.autoscaler_cooldown_period
 
     cpu_utilization {
       target = var.autoscaler_cpu_utilization
     }
   }
-
 }
 
 # Creaing target pool
 resource "google_compute_target_pool" "target_pool" {
   name = var.targetpool_name
-
 }
 
 # Creating the Instance Group Manager
 resource "google_compute_region_instance_group_manager" "csye6225_mig" {
-  name = var.mig_name
+  name   = var.mig_name
   region = var.region
 
   version {
     instance_template = google_compute_region_instance_template.csye6225_template.id
-    name = var.mig_version_name
+    name              = var.mig_version_name
   }
 
-  target_pools = [google_compute_target_pool.target_pool.id]
+  target_pools       = [google_compute_target_pool.target_pool.id]
   base_instance_name = var.mig_base_instance_name
 
   named_port {
     name = var.mig_named_port_name
     port = var.mig_named_port
   }
-
 }
 
 # External Application Load Balancer
@@ -440,52 +436,50 @@ resource "google_compute_address" "lb_address" {
 }
 # Creating an Backend Service
 resource "google_compute_region_backend_service" "webapp_backend" {
-  name = var.backend_name
-  region = var.region
+  name                  = var.backend_name
+  region                = var.region
   load_balancing_scheme = var.backend_load_balancing_scheme
-  health_checks = [google_compute_region_health_check.webapp_health_check.id]
+  health_checks         = [google_compute_region_health_check.webapp_health_check.id]
 
   protocol = var.backend_protocol
 
   backend {
-    group = google_compute_region_instance_group_manager.csye6225_mig.instance_group
-    balancing_mode = var.backend_balancing_mode
+    group           = google_compute_region_instance_group_manager.csye6225_mig.instance_group
+    balancing_mode  = var.backend_balancing_mode
     capacity_scaler = var.backend_capacity_scaler
   }
-
 }
 
 # Creating a URL Map
 resource "google_compute_region_url_map" "lb_url_map" {
-  name = var.lb_url_name
-  region = var.region
+  name            = var.lb_url_name
+  region          = var.region
   default_service = google_compute_region_backend_service.webapp_backend.id
 }
 
 # Creating a target HTTP proxy
 resource "google_compute_region_target_https_proxy" "lb_target_proxy" {
-  name = var.lb_target_proxy_name
-  region = var.region
-  url_map = google_compute_region_url_map.lb_url_map.id
-  ssl_certificates = [ google_compute_region_ssl_certificate.default.id ]
+  name             = var.lb_target_proxy_name
+  region           = var.region
+  url_map          = google_compute_region_url_map.lb_url_map.id
+  ssl_certificates = [google_compute_region_ssl_certificate.default.id]
 }
 
 # Creating a forwarding rule
-resource "google_compute_forwarding_rule" "lb_forwarding_rule"{
-  name = var.lb_forwarding_rule_name
-  provider = google
-  project = var.project
-  region = var.region
-  depends_on = [ google_compute_subnetwork.proxy_only ]
+resource "google_compute_forwarding_rule" "lb_forwarding_rule" {
+  name       = var.lb_forwarding_rule_name
+  provider   = google
+  project    = var.project
+  region     = var.region
+  depends_on = [google_compute_subnetwork.proxy_only_subnet]
 
-  ip_protocol = var.lb_forwarding_rule_protocol
-  port_range = var.lb_forwarding_rule_port_range
+  ip_protocol           = var.lb_forwarding_rule_protocol
+  port_range            = var.lb_forwarding_rule_port_range
   load_balancing_scheme = var.lb_forwarding_rule_balancing_scheme
-  target = google_compute_region_target_https_proxy.lb_target_proxy.id
-  network = google_compute_network.vpc.id
-  ip_address = google_compute_address.lb_address.id
-  network_tier = var.lb_forwarding_rule_network_tier
-
+  target                = google_compute_region_target_https_proxy.lb_target_proxy.id
+  network               = google_compute_network.vpc.id
+  ip_address            = google_compute_address.lb_address.id
+  network_tier          = var.lb_forwarding_rule_network_tier
 }
 
 # Output IP of load balancer

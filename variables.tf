@@ -353,457 +353,457 @@ variable "compute_instance_service_account_scopes" {
 }
 
 variable "dns_a_record_name" {
-  type = string
+  type        = string
   description = "Domain name for A record"
-  default = "choudhary-abhinav.me."
+  default     = "choudhary-abhinav.me."
 }
 
 variable "dns_a_record_type" {
-  type = string
+  type        = string
   description = "A record type"
-  default = "A"
+  default     = "A"
 }
 
 variable "dns_a_record_ttl" {
-  type = number
+  type        = number
   description = "Time to live (in seconds) for domain dns"
-  default = 300
+  default     = 300
 }
 
 variable "dns_a_record_managed_zone" {
-  type = string
+  type        = string
   description = "DNS name for zone"
-  default = "choudhary-abhinav"
+  default     = "choudhary-abhinav"
 }
 
 variable "pubsub_publisher_account_id" {
-  type = string
+  type        = string
   description = "Account Id for Pub/Sub service account"
-  default = "pubsub-publisher"
+  default     = "pubsub-publisher"
 }
 
 variable "pubsub_publisher_display_name" {
-  type = string
+  type        = string
   description = "Display name for Pub/Sub service account"
-  default = "PubSub Publisher"
+  default     = "PubSub Publisher"
 }
 
 variable "pubsub_publisher_publisher_role" {
-  type = string
+  type        = string
   description = "Publisher role for Pub/Sub service account"
-  default = "roles/pubsub.publisher"
+  default     = "roles/pubsub.publisher"
 }
 
 variable "webapp_topic_name" {
-  type = string
+  type        = string
   description = "Name for Webapp GCP topic"
-  default = "verify_email"
+  default     = "verify_email"
 }
 
 variable "webapp_topic_retention" {
-  type = string
+  type        = string
   description = "Retention for Webapp GCP topic"
-  default = "604800s"
+  default     = "604800s"
 }
 
 variable "webapp_topic_subscription_name" {
-  type = string
+  type        = string
   description = "Name for Webapp GCP topic Subscription"
-  default = "subscriber"
+  default     = "subscriber"
 }
 
 variable "cloud_function_name" {
-  type = string
+  type        = string
   description = "Name for Webapp GCP cloud function"
-  default = "email-lambda-function"
+  default     = "email-lambda-function"
 }
 
 variable "cloud_function_description" {
-  type = string
+  type        = string
   description = "Description for Webapp GCP cloud function"
-  default = "Function to handle user verification email processing"
+  default     = "Function to handle user verification email processing"
 }
 
 variable "cloud_function_run_time" {
-  type = string
+  type        = string
   description = "Run time for Webapp GCP cloud function"
-  default = "python311"
+  default     = "python311"
 }
 
 variable "cloud_function_entry_point" {
-  type = string
+  type        = string
   description = "Entry point for Webapp GCP cloud function"
-  default = "lambda_function"
+  default     = "lambda_function"
 }
 
 variable "cloud_function_source_bucket" {
-  type = string
+  type        = string
   description = "Source bucket for Webapp GCP cloud function"
-  default = "serverless-function-abhinav"
+  default     = "serverless-function-abhinav"
 }
 
 variable "cloud_function_source_object" {
-  type = string
+  type        = string
   description = "Source bucket object for Webapp GCP cloud function"
-  default = "index.zip"
+  default     = "index.zip"
 }
 
 variable "cloud_function_memory" {
-  type = string
+  type        = string
   description = "Availale memory object for Webapp GCP cloud function"
-  default = "128Mi"
+  default     = "128Mi"
 }
 
 variable "cloud_function_timeout" {
-  type = number
+  type        = number
   description = "Timeout (in seconds) for Webapp GCP cloud function"
-  default = 60
+  default     = 60
 }
 
 variable "cloud_function_instance_count" {
-  type = number
+  type        = number
   description = "Instance count for Webapp GCP cloud function"
-  default = 1
+  default     = 1
 }
 
 variable "cloud_function_env_smtp_host" {
-  type = string
+  type        = string
   description = "SMTP Host Env variable for Webapp GCP cloud function"
-  default = "smtp.mailgun.org"
+  default     = "smtp.mailgun.org"
 }
 
 variable "cloud_function_env_smtp_port" {
-  type = number
+  type        = number
   description = "SMTP Port Env variable for Webapp GCP cloud function"
-  default = 587
+  default     = 587
 }
 
 variable "cloud_function_env_smtp_username" {
-  type = string
+  type        = string
   description = "SMTP Username Env variable for Webapp GCP cloud function"
-  default = "postmaster@mail.choudhary-abhinav.me"
+  default     = "postmaster@mail.choudhary-abhinav.me"
 }
 
 variable "cloud_function_env_smtp_password" {
-  type = string
+  type        = string
   description = "SMTP Password Env variable for Webapp GCP cloud function"
-  default = "df156c1458e29cddb1bf9bed1fdef297-f68a26c9-5ba9a9f5"
+  default     = "df156c1458e29cddb1bf9bed1fdef297-f68a26c9-5ba9a9f5"
 }
 
 variable "cloud_function_env_smtp_verification_link" {
-  type = string
+  type        = string
   description = "SMTP Verification Link Env variable for Webapp GCP cloud function"
-  default = "https://choudhary-abhinav.me/v1/verify"
+  default     = "https://choudhary-abhinav.me/v1/verify"
 }
 
 variable "cloud_function_env_smtp_email" {
-  type = string
+  type        = string
   description = "SMTP Email Env variable for Webapp GCP cloud function"
-  default = "no-reply@choudhary-abhinav.me"
+  default     = "no-reply@choudhary-abhinav.me"
 }
 
 variable "cloud_function_env_db_table" {
-  type = string
+  type        = string
   description = "DB Table Env variable for Webapp GCP cloud function"
-  default = "verify_user"
+  default     = "verify_user"
 }
 
 variable "cloud_function_event_trigger_type" {
-  type = string
+  type        = string
   description = "Event Trigger Type for Webapp GCP cloud function"
-  default = "google.cloud.pubsub.topic.v1.messagePublished"
+  default     = "google.cloud.pubsub.topic.v1.messagePublished"
 }
 
 variable "serverless_account_id" {
-  type = string
+  type        = string
   description = "Account Id for Serverless service account"
-  default = "serverless-publisher"
+  default     = "serverless-publisher"
 }
 
 variable "serverless_display_name" {
-  type = string
+  type        = string
   description = "Display name for Serverless service account"
-  default = "Serverless Publisher"
+  default     = "Serverless Publisher"
 }
 
 variable "serverless_cloud_function_developer_role" {
-  type = string
+  type        = string
   description = "Cloud Functiond Developer role for Serverless service account"
-  default = "roles/cloudfunctions.developer"
+  default     = "roles/cloudfunctions.developer"
 }
 
 variable "serverless_cloud_SQL_Client" {
-  type = string
+  type        = string
   description = "Cloud SQL Client role for Serverless service account"
-  default = "roles/cloudsql.client"
+  default     = "roles/cloudsql.client"
 }
 
 variable "mysql_connection_subnet_name" {
-  type = string
+  type        = string
   description = "MySQL connection subnet name"
-  default = "mysql-connection"
+  default     = "mysql-connection"
 }
 
 variable "mysql_connection_subnet_ip_cidr" {
-  type = string
+  type        = string
   description = "MySQL connection subnet Ip CIDR range"
-  default = "10.8.0.0/28"
+  default     = "10.8.0.0/28"
 }
 
 variable "vpc_access_connector_name" {
-  type = string
+  type        = string
   description = "VPC access connector name"
-  default = "vpc-connector"
+  default     = "vpc-connector"
 }
 
 variable "vpc_access_connector_machine_type" {
-  type = string
+  type        = string
   description = "VPC access connector Machine Type"
-  default = "e2-standard-4"
+  default     = "e2-standard-4"
 }
 
 variable "health_check_name" {
-  type = string
+  type        = string
   description = "Name for Health Check"
-  default = "webapp-health-check"
+  default     = "webapp-health-check"
 }
 
 variable "health_check_timeout_sec" {
-  type = number
+  type        = number
   description = "Timeout (seconds) for Health Check"
-  default = 20
+  default     = 20
 }
 
 variable "health_check_check_interval_sec" {
-  type = number
+  type        = number
   description = "Check Interval (seconds) for Health Check"
-  default = 20
+  default     = 20
 }
 
 variable "health_check_healthy_threshold" {
-  type = number
+  type        = number
   description = "Healthy Threshold for Health Check"
-  default = 2
+  default     = 2
 }
 
 variable "health_check_unhealthy_threshold" {
-  type = number
+  type        = number
   description = "Unhealthy Threshold for Health Check"
-  default = 5
+  default     = 5
 }
 
 variable "health_check_http_port" {
-  type = number
+  type        = number
   description = "Port for Health Check http"
-  default = 8080
+  default     = 8080
 }
 
 variable "health_check_http_request_path" {
-  type = string
+  type        = string
   description = "Request Path for Health Check http"
-  default = "/healthz"
+  default     = "/healthz"
 }
 
 variable "health_check_http_port_specification" {
-  type = string
+  type        = string
   description = "Port Specification for Health Check http"
-  default = "USE_FIXED_PORT"
+  default     = "USE_FIXED_PORT"
 }
 
 variable "health_check_log_enabled" {
-  type = bool
+  type        = bool
   description = "Enable Logs for Health Check http"
-  default = true
+  default     = true
 }
 
 variable "autoscaler_name" {
-  type = string
+  type        = string
   description = "Name for Autoscaler"
-  default = "webapp-autoscaler"
+  default     = "webapp-autoscaler"
 }
 
 variable "autoscaler_max_replica" {
-  type = number
+  type        = number
   description = "Max Replica for Autoscaler"
-  default = 6
+  default     = 6
 }
 
 variable "autoscaler_min_replica" {
-  type = number
+  type        = number
   description = "Min Replica for Autoscaler"
-  default = 3
+  default     = 3
 }
 
 variable "autoscaler_cooldown_period" {
-  type = number
+  type        = number
   description = "Cooldown Period for Autoscaler"
-  default = 60
+  default     = 60
 }
 
 variable "autoscaler_cpu_utilization" {
-  type = number
+  type        = number
   description = "CPU Utilization for Autoscaler"
-  default = 0.05
+  default     = 0.05
 }
 
 variable "targetpool_name" {
-  type = string
+  type        = string
   description = "Name for Target Pool"
-  default = "webapp-target-pool"
+  default     = "webapp-target-pool"
 }
 
 variable "mig_name" {
-  type = string
+  type        = string
   description = "Name for MIG"
-  default = "webapp-group-manager"
+  default     = "webapp-group-manager"
 }
 
 variable "mig_version_name" {
-  type = string
+  type        = string
   description = "Name for instance template version in MIG"
-  default = "primary"
+  default     = "primary"
 }
 
 variable "mig_base_instance_name" {
-  type = string
+  type        = string
   description = "Name for base instance in MIG"
-  default = "webapp"
+  default     = "webapp"
 }
 
 variable "mig_named_port_name" {
-  type = string
+  type        = string
   description = "Name for named port in MIG"
-  default = "http"
+  default     = "http"
 }
 
 variable "mig_named_port" {
-  type = number
+  type        = number
   description = "Port for named port in MIG"
-  default = 8080
+  default     = 8080
 }
 
 variable "proxy_subnet_name" {
-  type = string
+  type        = string
   description = "Name for proxy subnet"
-  default = "proxy-only-subnet"
+  default     = "proxy-only-subnet"
 }
 
 variable "proxy_subnet_ip_cidr" {
-  type = string
+  type        = string
   description = "Ip CIDR for proxy subnet"
-  default = "10.129.0.0/23"
+  default     = "10.129.0.0/23"
 }
 
 variable "proxy_subnet_purpose" {
-  type = string
+  type        = string
   description = "Purpose for proxy subnet"
-  default = "REGIONAL_MANAGED_PROXY"
+  default     = "REGIONAL_MANAGED_PROXY"
 }
 
 variable "proxy_subnet_role" {
-  type = string
+  type        = string
   description = "Role for proxy subnet"
-  default = "ACTIVE"
+  default     = "ACTIVE"
 }
 
 variable "lb_address_name" {
-  type = string
+  type        = string
   description = "Name for LB address"
-  default = "lb-address"
+  default     = "lb-address"
 }
 
 variable "lb_address_type" {
-  type = string
+  type        = string
   description = "Address type for LB address"
-  default = "EXTERNAL"
+  default     = "EXTERNAL"
 }
 
 variable "lb_address_Network_tier" {
-  type = string
+  type        = string
   description = "Network tier for LB address"
-  default = "STANDARD"
+  default     = "STANDARD"
 }
 
 variable "backend_name" {
-  type = string
+  type        = string
   description = "Name for webapp backend"
-  default = "webapp-backend"
+  default     = "webapp-backend"
 }
 
 variable "backend_load_balancing_scheme" {
-  type = string
+  type        = string
   description = "Load Balancing Scheme for webapp backend"
-  default = "EXTERNAL_MANAGED"
+  default     = "EXTERNAL_MANAGED"
 }
 
 variable "backend_protocol" {
-  type = string
+  type        = string
   description = "Protocol for webapp backend"
-  default = "HTTP"
+  default     = "HTTP"
 }
 
 variable "backend_balancing_mode" {
-  type = string
+  type        = string
   description = "Balancing Mode for webapp backend"
-  default = "UTILIZATION"
+  default     = "UTILIZATION"
 }
 
 variable "backend_capacity_scaler" {
-  type = number
+  type        = number
   description = "Capacity Scaler for webapp backend"
-  default = 1.0
+  default     = 1.0
 }
 
 variable "lb_url_name" {
-  type = string
+  type        = string
   description = "Lb url name"
-  default = "lb-url-map"
+  default     = "lb-url-map"
 }
 
 variable "lb_target_proxy_name" {
-  type = string
+  type        = string
   description = "Lb target proxy name"
-  default = "lb-target-proxy"
+  default     = "lb-target-proxy"
 }
 
 variable "lb_forwarding_rule_name" {
-  type = string
+  type        = string
   description = "Lb forwarding rule name"
-  default = "lb-forwarding-rule"
+  default     = "lb-forwarding-rule"
 }
 
 variable "lb_forwarding_rule_protocol" {
-  type = string
+  type        = string
   description = "Protocol for lb forwarding rule"
-  default = "TCP"
+  default     = "TCP"
 }
 
 variable "lb_forwarding_rule_port_range" {
-  type = string
+  type        = string
   description = "Port range for lb forwarding rule"
-  default = "443"
+  default     = "443"
 }
 
 variable "lb_forwarding_rule_balancing_scheme" {
-  type = string
+  type        = string
   description = "Balancing scheme for lb forwarding rule"
-  default = "EXTERNAL_MANAGED"
+  default     = "EXTERNAL_MANAGED"
 }
 
 variable "lb_forwarding_rule_network_tier" {
-  type = string
+  type        = string
   description = "Network tier for lb forwarding rule"
-  default = "STANDARD"
+  default     = "STANDARD"
 }
 
 variable "ssl_cert_certificate" {
-  type = string
+  type        = string
   description = "Certificate path for ssl certificate"
-  default = "D:\\Northeastern\\Courses\\cloud\\certificate\\choudhary-abhinav_me.crt"
+  default     = "D:\\Northeastern\\Courses\\cloud\\certificate\\choudhary-abhinav_me.crt"
 }
 
 variable "ssl_cert_private_key" {
-  type = string
+  type        = string
   description = "Certificate path for ssl certificate"
-  default = "D:\\Northeastern\\Courses\\cloud\\certificate\\privateKey.pem"
+  default     = "D:\\Northeastern\\Courses\\cloud\\certificate\\privateKey.pem"
 }

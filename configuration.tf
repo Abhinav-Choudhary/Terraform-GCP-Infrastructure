@@ -188,58 +188,6 @@ resource "google_service_account_key" "pubsub_publisher_key" {
   service_account_id = google_service_account.pubsub_publisher.id
 }
 
-#VM Instance for webapp
-resource "google_compute_instance" "webapp_instance" {
-  name         = var.compute_instance_name
-  machine_type = var.instance_machine_type
-  zone         = var.instance_zone
-  tags         = var.tags
-  depends_on   = [google_project_iam_binding.logging_admin, google_project_iam_binding.monitoring_metric_writer]
-
-  boot_disk {
-    initialize_params {
-      image = var.instance_app_image_family
-      size  = var.instance_disk_size
-      type  = var.instance_disk_type
-    }
-  }
-  network_interface {
-    subnetwork = google_compute_subnetwork.webapp_subnet.self_link
-    access_config {
-      nat_ip = google_compute_address.webapp_address.address
-    }
-  }
-  metadata = {
-    startup-script = <<-EOF
-#!/bin/bash
-
-if [ ! -f "/opt/db.properties" ] 
-then
-sudo touch /opt/db.properties
-
-sudo echo "spring.datasource.url=jdbc:mysql://${google_sql_database_instance.database_instance.first_ip_address}:3306/${google_sql_database.database.name}?createDatabaseIfNotExist=true" >> /opt/db.properties
-sudo echo "spring.datasource.username=${google_sql_user.users.name}" >> /opt/db.properties
-sudo echo "spring.datasource.password=${google_sql_user.users.password}" >> /opt/db.properties
-sudo echo "spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver" >> /opt/db.properties
-sudo echo "spring.jpa.hibernate.ddl-auto=update" >> /opt/db.properties
-sudo echo "spring.jpa.show-sql=true" >> /opt/db.properties
-sudo echo "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL8Dialect" >> /opt/db.properties
-
-sudo chown -R csye6225:csye6225 /opt/db.properties
-else
-sudo echo "db.properties already exists" >> /var/log/csye6225/app.log
-fi
-
-sudo touch /opt/pubsub-service-account-key.json
-sudo echo '${base64decode(google_service_account_key.pubsub_publisher_key.private_key)}' >> /opt/pubsub-service-account-key.json
-EOF
-  }
-  service_account {
-    email  = google_service_account.logging_service_account.email
-    scopes = var.compute_instance_service_account_scopes
-  }
-}
-
 resource "google_dns_record_set" "webapp_a_record" {
   name = var.dns_a_record_name
   type = var.dns_a_record_type
@@ -354,35 +302,19 @@ resource "google_vpc_access_connector" "cloud_function_connector" {
   machine_type = var.vpc_access_connector_machine_type
 }
 
-# ---------------------------------------   Load Balancer and Autoscaler -----------------------------
-
-# # Service accout for template creation ---------------------------------------------------------------
-# resource "google_service_account" "template" {
-#   account_id   = "instance-template-generator"
-#   display_name = "Instance template generator"
-# }
-
-# resource "google_project_iam_binding" "publisher_role_template" {
-#   project    = var.project
-#   role       = var.pubsub_publisher_publisher_role
-
-#   members = [
-#     "serviceAccount:${google_service_account.template.email}"
-#   ]
-# }
-
-#  Regional instance template ------------------------------------------------------------------------
+#  Regional instance template
 resource "google_compute_region_instance_template" "csye6225_template" {
-  name = "csye6225-template"
+  name = var.compute_instance_name
   region = var.region
-
-  machine_type = "e2-medium"
-  can_ip_forward = false
+  machine_type = var.instance_machine_type
+  can_ip_forward = var.compute_instance_can_ip_forward
+  tags = var.tags
+  depends_on   = [google_project_iam_binding.logging_admin, google_project_iam_binding.monitoring_metric_writer]
 
   disk {
     source_image = var.instance_app_image_family
-    auto_delete = true
-    boot = true
+    auto_delete = var.compute_instance_auto_delete
+    boot = var.compute_instance_boot
 
   }
 
@@ -393,7 +325,7 @@ resource "google_compute_region_instance_template" "csye6225_template" {
 
   service_account {
     email = google_service_account.logging_service_account.email
-    scopes = ["cloud-platform"]
+    scopes = var.compute_instance_service_account_scopes
   }
 
   metadata = {
@@ -420,48 +352,43 @@ sudo touch /opt/pubsub-service-account-key.json
 sudo echo '${base64decode(google_service_account_key.pubsub_publisher_key.private_key)}' >> /opt/pubsub-service-account-key.json
 EOF
   }
-
-  tags = var.tags
-  
 }
 
-# Creating  a health check for the instance ------------------------------------------------------
+# Health Check
 resource "google_compute_region_health_check" "webapp_health_check" {
 
-  name = "webapp-health-check"
+  name = var.health_check_name
 
-  timeout_sec = 20
-  check_interval_sec = 20
-  healthy_threshold = 2
-  unhealthy_threshold = 5
+  timeout_sec = var.health_check_timeout_sec
+  check_interval_sec = var.health_check_check_interval_sec
+  healthy_threshold = var.health_check_healthy_threshold
+  unhealthy_threshold = var.health_check_unhealthy_threshold
 
   http_health_check {
-    port = 8080
-    request_path = "/healthz"
-    port_specification = "USE_FIXED_PORT"
+    port = var.health_check_http_port
+    request_path = var.health_check_http_request_path
+    port_specification = var.health_check_http_port_specification
   }
 
   log_config {
-    enable = true
+    enable = var.health_check_log_enabled
   }
   
 }
 
-# Creating a regional autoscaler ---------------------------------------------------------------
+# Regional Autoscaler
 resource "google_compute_region_autoscaler" "webapp_autoscaler" {
 
-  name = "webapp-autoscaler"
+  name = var.autoscaler_name
   region = var.region
   target = google_compute_region_instance_group_manager.csye6225_mig.id
-
-  # Autoscaling when CPU Util = 5%
   autoscaling_policy {
-    max_replicas = 5
-    min_replicas = 1
-    cooldown_period = 60
+    max_replicas = var.autoscaler_max_replica
+    min_replicas = var.autoscaler_min_replica
+    cooldown_period = var.autoscaler_cooldown_period
 
     cpu_utilization {
-      target = 0.05
+      target = var.autoscaler_cpu_utilization
     }
   }
 
@@ -469,145 +396,107 @@ resource "google_compute_region_autoscaler" "webapp_autoscaler" {
 
 # Creaing target pool
 resource "google_compute_target_pool" "target_pool" {
-  name = "target-pool"
-  
+  name = var.targetpool_name
+
 }
 
 # Creating the Instance Group Manager
 resource "google_compute_region_instance_group_manager" "csye6225_mig" {
-  name = "csye6225-group-manager"
+  name = var.mig_name
   region = var.region
 
   version {
     instance_template = google_compute_region_instance_template.csye6225_template.id
-    name = "primary"
+    name = var.mig_version_name
   }
 
   target_pools = [google_compute_target_pool.target_pool.id]
-  base_instance_name = "webapp"
+  base_instance_name = var.mig_base_instance_name
 
   named_port {
-    name = "http"
-    port = 8080
+    name = var.mig_named_port_name
+    port = var.mig_named_port
   }
 
 }
 
-# Creating an External Application Load Balancer --------------------------------------------
+# External Application Load Balancer
 
-# Create a VPC proxy-only subnet
-resource "google_compute_subnetwork" "proxy_only" {
-  name          = "proxy-only-subnet"
-  ip_cidr_range = "10.129.0.0/23"
+# VPC proxy-only subnet
+resource "google_compute_subnetwork" "proxy_only_subnet" {
+  name          = var.proxy_subnet_name
+  ip_cidr_range = var.proxy_subnet_ip_cidr
   network       = google_compute_network.vpc.id
-  purpose       = "REGIONAL_MANAGED_PROXY"
+  purpose       = var.proxy_subnet_purpose
   region        = var.region
-  role          = "ACTIVE"
+  role          = var.proxy_subnet_role
 }
 # Reserve an IP address
 resource "google_compute_address" "lb_address" {
-  name         = "lb-address"
-  address_type = "EXTERNAL"
-  network_tier = "STANDARD"
+  name         = var.lb_address_name
+  address_type = var.lb_address_type
+  network_tier = var.lb_address_Network_tier
   region       = var.region
-}
-
-# Create firewall rule
-resource "google_compute_firewall" "lb_default" {
-  name = "fw-allow-health-check"
-  allow {
-    protocol = "tcp"
-  }
-  direction     = "INGRESS"
-  network       = google_compute_network.vpc.id
-  priority      = 900
-  source_ranges = ["130.211.0.0/22", "35.191.0.0/16"]
-  target_tags   = ["load-balanced-backend"]
-}
-
-resource "google_compute_firewall" "allow_proxy" {
-  name = "fw-allow-proxies"
-  allow {
-    ports    = ["443"]
-    protocol = "tcp"
-  }
-  allow {
-    ports    = ["80"]
-    protocol = "tcp"
-  }
-  allow {
-    ports    = ["8080"]
-    protocol = "tcp"
-  }
-  direction     = "INGRESS"
-  network       = google_compute_network.vpc.id
-  priority      = 900
-  source_ranges = ["10.129.0.0/23"]
-  target_tags   = ["load-balanced-backend"]
 }
 # Creating an Backend Service
 resource "google_compute_region_backend_service" "webapp_backend" {
-  name = "webapp-backend"
+  name = var.backend_name
   region = var.region
-  load_balancing_scheme = "EXTERNAL_MANAGED"
+  load_balancing_scheme = var.backend_load_balancing_scheme
   health_checks = [google_compute_region_health_check.webapp_health_check.id]
 
-  protocol = "HTTP"
+  protocol = var.backend_protocol
 
   backend {
     group = google_compute_region_instance_group_manager.csye6225_mig.instance_group
-    balancing_mode = "UTILIZATION"
-    capacity_scaler = 1.0
+    balancing_mode = var.backend_balancing_mode
+    capacity_scaler = var.backend_capacity_scaler
   }
 
 }
 
 # Creating a URL Map
 resource "google_compute_region_url_map" "lb_url_map" {
-  name = "lb-url-map"
+  name = var.lb_url_name
   region = var.region
   default_service = google_compute_region_backend_service.webapp_backend.id
-  
 }
 
 # Creating a target HTTP proxy
-resource "google_compute_region_target_http_proxy" "lb_target_proxy" {
-  name = "lb-target-proxy"
+resource "google_compute_region_target_https_proxy" "lb_target_proxy" {
+  name = var.lb_target_proxy_name
   region = var.region
   url_map = google_compute_region_url_map.lb_url_map.id
-  # ssl_certificates = [ google_compute_managed_ssl_certificate.lb_default.id ]
-  # depends_on = [ google_compute_managed_ssl_certificate.lb_default ]
+  ssl_certificates = [ google_compute_region_ssl_certificate.default.id ]
 }
 
 # Creating a forwarding rule
 resource "google_compute_forwarding_rule" "lb_forwarding_rule"{
-  name = "lb-forwarding-rule"
+  name = var.lb_forwarding_rule_name
   provider = google
   project = var.project
   region = var.region
   depends_on = [ google_compute_subnetwork.proxy_only ]
 
-  ip_protocol = "TCP"
-  port_range = "80"
-  load_balancing_scheme = "EXTERNAL_MANAGED"
-  target = google_compute_region_target_http_proxy.lb_target_proxy.id
+  ip_protocol = var.lb_forwarding_rule_protocol
+  port_range = var.lb_forwarding_rule_port_range
+  load_balancing_scheme = var.lb_forwarding_rule_balancing_scheme
+  target = google_compute_region_target_https_proxy.lb_target_proxy.id
   network = google_compute_network.vpc.id
   ip_address = google_compute_address.lb_address.id
-  network_tier = "STANDARD"
+  network_tier = var.lb_forwarding_rule_network_tier
 
 }
 
 # Output IP of load balancer
 output "load_balancer_IP" {
   value = google_compute_address.lb_address.address
-  
 }
 
-# Certificate---------------------------------
-# resource "google_compute_managed_ssl_certificate" "lb_default" {
-#   name     = "test-cert-abhinav"
-#   project = var.project
-#   managed {
-#     domains = ["choudhary-abhinav.me."]
-#   }
-# }
+# Certificate
+resource "google_compute_region_ssl_certificate" "default" {
+  region      = var.region
+  name        = "abhinav-certificate"
+  private_key = file(var.ssl_cert_private_key)
+  certificate = file(var.ssl_cert_certificate)
+}

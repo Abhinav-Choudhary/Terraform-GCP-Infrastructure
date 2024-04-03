@@ -130,6 +130,24 @@ variable "compute_instance_name" {
   default     = "csye6225-instance"
 }
 
+variable "compute_instance_can_ip_forward" {
+  type        = bool
+  description = "Enable IP forward for compute instance"
+  default     = false
+}
+
+variable "compute_instance_auto_delete" {
+  type        = bool
+  description = "Enable Auto Delete for compute instance"
+  default     = true
+}
+
+variable "compute_instance_boot" {
+  type        = bool
+  description = "Enable Boot for compute instance"
+  default     = true
+}
+
 variable "instance_machine_type" {
   type        = string
   description = "Set machine type for VM Instance"
@@ -475,7 +493,7 @@ variable "cloud_function_env_smtp_password" {
 variable "cloud_function_env_smtp_verification_link" {
   type = string
   description = "SMTP Verification Link Env variable for Webapp GCP cloud function"
-  default = "http://choudhary-abhinav.me:80/v1/verify"
+  default = "https://choudhary-abhinav.me/v1/verify"
 }
 
 variable "cloud_function_env_smtp_email" {
@@ -542,4 +560,250 @@ variable "vpc_access_connector_machine_type" {
   type = string
   description = "VPC access connector Machine Type"
   default = "e2-standard-4"
+}
+
+variable "health_check_name" {
+  type = string
+  description = "Name for Health Check"
+  default = "webapp-health-check"
+}
+
+variable "health_check_timeout_sec" {
+  type = number
+  description = "Timeout (seconds) for Health Check"
+  default = 20
+}
+
+variable "health_check_check_interval_sec" {
+  type = number
+  description = "Check Interval (seconds) for Health Check"
+  default = 20
+}
+
+variable "health_check_healthy_threshold" {
+  type = number
+  description = "Healthy Threshold for Health Check"
+  default = 2
+}
+
+variable "health_check_unhealthy_threshold" {
+  type = number
+  description = "Unhealthy Threshold for Health Check"
+  default = 5
+}
+
+variable "health_check_http_port" {
+  type = number
+  description = "Port for Health Check http"
+  default = 8080
+}
+
+variable "health_check_http_request_path" {
+  type = string
+  description = "Request Path for Health Check http"
+  default = "/healthz"
+}
+
+variable "health_check_http_port_specification" {
+  type = string
+  description = "Port Specification for Health Check http"
+  default = "USE_FIXED_PORT"
+}
+
+variable "health_check_log_enabled" {
+  type = bool
+  description = "Enable Logs for Health Check http"
+  default = true
+}
+
+variable "autoscaler_name" {
+  type = string
+  description = "Name for Autoscaler"
+  default = "webapp-autoscaler"
+}
+
+variable "autoscaler_max_replica" {
+  type = number
+  description = "Max Replica for Autoscaler"
+  default = 6
+}
+
+variable "autoscaler_min_replica" {
+  type = number
+  description = "Min Replica for Autoscaler"
+  default = 3
+}
+
+variable "autoscaler_cooldown_period" {
+  type = number
+  description = "Cooldown Period for Autoscaler"
+  default = 60
+}
+
+variable "autoscaler_cpu_utilization" {
+  type = number
+  description = "CPU Utilization for Autoscaler"
+  default = 0.05
+}
+
+variable "targetpool_name" {
+  type = string
+  description = "Name for Target Pool"
+  default = "webapp-target-pool"
+}
+
+variable "mig_name" {
+  type = string
+  description = "Name for MIG"
+  default = "webapp-group-manager"
+}
+
+variable "mig_version_name" {
+  type = string
+  description = "Name for instance template version in MIG"
+  default = "primary"
+}
+
+variable "mig_base_instance_name" {
+  type = string
+  description = "Name for base instance in MIG"
+  default = "webapp"
+}
+
+variable "mig_named_port_name" {
+  type = string
+  description = "Name for named port in MIG"
+  default = "http"
+}
+
+variable "mig_named_port" {
+  type = number
+  description = "Port for named port in MIG"
+  default = 8080
+}
+
+variable "proxy_subnet_name" {
+  type = string
+  description = "Name for proxy subnet"
+  default = "proxy-only-subnet"
+}
+
+variable "proxy_subnet_ip_cidr" {
+  type = string
+  description = "Ip CIDR for proxy subnet"
+  default = "10.129.0.0/23"
+}
+
+variable "proxy_subnet_purpose" {
+  type = string
+  description = "Purpose for proxy subnet"
+  default = "REGIONAL_MANAGED_PROXY"
+}
+
+variable "proxy_subnet_role" {
+  type = string
+  description = "Role for proxy subnet"
+  default = "ACTIVE"
+}
+
+variable "lb_address_name" {
+  type = string
+  description = "Name for LB address"
+  default = "lb-address"
+}
+
+variable "lb_address_type" {
+  type = string
+  description = "Address type for LB address"
+  default = "EXTERNAL"
+}
+
+variable "lb_address_Network_tier" {
+  type = string
+  description = "Network tier for LB address"
+  default = "STANDARD"
+}
+
+variable "backend_name" {
+  type = string
+  description = "Name for webapp backend"
+  default = "webapp-backend"
+}
+
+variable "backend_load_balancing_scheme" {
+  type = string
+  description = "Load Balancing Scheme for webapp backend"
+  default = "EXTERNAL_MANAGED"
+}
+
+variable "backend_protocol" {
+  type = string
+  description = "Protocol for webapp backend"
+  default = "HTTP"
+}
+
+variable "backend_balancing_mode" {
+  type = string
+  description = "Balancing Mode for webapp backend"
+  default = "UTILIZATION"
+}
+
+variable "backend_capacity_scaler" {
+  type = number
+  description = "Capacity Scaler for webapp backend"
+  default = 1.0
+}
+
+variable "lb_url_name" {
+  type = string
+  description = "Lb url name"
+  default = "lb-url-map"
+}
+
+variable "lb_target_proxy_name" {
+  type = string
+  description = "Lb target proxy name"
+  default = "lb-target-proxy"
+}
+
+variable "lb_forwarding_rule_name" {
+  type = string
+  description = "Lb forwarding rule name"
+  default = "lb-forwarding-rule"
+}
+
+variable "lb_forwarding_rule_protocol" {
+  type = string
+  description = "Protocol for lb forwarding rule"
+  default = "TCP"
+}
+
+variable "lb_forwarding_rule_port_range" {
+  type = string
+  description = "Port range for lb forwarding rule"
+  default = "443"
+}
+
+variable "lb_forwarding_rule_balancing_scheme" {
+  type = string
+  description = "Balancing scheme for lb forwarding rule"
+  default = "EXTERNAL_MANAGED"
+}
+
+variable "lb_forwarding_rule_network_tier" {
+  type = string
+  description = "Network tier for lb forwarding rule"
+  default = "STANDARD"
+}
+
+variable "ssl_cert_certificate" {
+  type = string
+  description = "Certificate path for ssl certificate"
+  default = "D:\\Northeastern\\Courses\\cloud\\certificate\\choudhary-abhinav_me.crt"
+}
+
+variable "ssl_cert_private_key" {
+  type = string
+  description = "Certificate path for ssl certificate"
+  default = "D:\\Northeastern\\Courses\\cloud\\certificate\\privateKey.pem"
 }

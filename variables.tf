@@ -475,7 +475,7 @@ variable "cloud_function_env_smtp_password" {
 variable "cloud_function_env_smtp_verification_link" {
   type = string
   description = "SMTP Verification Link Env variable for Webapp GCP cloud function"
-  default = "http://choudhary-abhinav.me:8080/v1/verify"
+  default = "http://choudhary-abhinav.me:80/v1/verify"
 }
 
 variable "cloud_function_env_smtp_email" {

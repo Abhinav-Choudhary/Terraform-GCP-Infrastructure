@@ -19,6 +19,7 @@ resource "google_compute_subnetwork" "webapp_subnet" {
   ip_cidr_range = var.ip_cidr_range_webapp
   region        = var.region
   project       = var.project
+  private_ip_google_access = var.private_ip_google_access
 }
 
 # Create db subnet

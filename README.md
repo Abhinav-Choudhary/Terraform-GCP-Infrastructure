@@ -6,6 +6,13 @@ Following Google Cloud Api's have been enabled for this project:
 - Compute Engine API
 - Service Networking API
 - Cloud DNS API
+- Cloud Build API
+- Cloud Functions API
+- Cloud Logging API
+- Cloud Pub/Sub API
+- Eventarc API
+- Cloud Pub/Sub API
+- Cloud Run Admin API
 
 # How to run the application
 - Install Gcloud cli and Terraform

@@ -490,7 +490,7 @@ output "load_balancer_IP" {
 # Certificate
 resource "google_compute_region_ssl_certificate" "default" {
   region      = var.region
-  name        = "abhinav-certificate"
+  name        = var.ssl_cert_name
   private_key = file(var.ssl_cert_private_key)
   certificate = file(var.ssl_cert_certificate)
 }

@@ -546,18 +546,21 @@ resource "google_kms_crypto_key" "vm_key" {
   name            = "vm-key-abhinav"
   key_ring        = google_kms_key_ring.abhinav_keyring.id
   rotation_period = "2592000s"
+  destroy_scheduled_duration = "10s"
 }
 
 resource "google_kms_crypto_key" "sql_key" {
   name            = "sql-key-abhinav"
   key_ring        = google_kms_key_ring.abhinav_keyring.id
   rotation_period = "2592000s"
+  destroy_scheduled_duration = "10s"
 }
 
 resource "google_kms_crypto_key" "bucket_key" {
   name            = "bucket-key-abhinav"
   key_ring        = google_kms_key_ring.abhinav_keyring.id
   rotation_period = "2592000s"
+  destroy_scheduled_duration = "10s"
 }
 
 resource "google_kms_crypto_key_iam_policy" "crypto_vm_key" {

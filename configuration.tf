@@ -54,13 +54,30 @@ resource "random_id" "db_instance_name_suffix" {
   byte_length = var.db_instance_name_suffix_length
 }
 
+# resource "google_service_account" "sql_service_account" {
+#   account_id   = "cloud-sql-service-account"
+#   display_name = "Cloud sql service account"
+# }
+
+# # Add logging admin role to service account
+# resource "google_project_iam_binding" "clous_sql_admin" {
+#   project    = var.project
+#   role       = "roles/cloudsql.admin"
+#   depends_on = [google_service_account.sql_service_account]
+
+#   members = [
+#     "serviceAccount:${google_service_account.sql_service_account.email}"
+#   ]
+# }
+
 # Setup CloudSQL database
 resource "google_sql_database_instance" "database_instance" {
   name                = "${var.sql_database_instance_name}-${random_id.db_instance_name_suffix.hex}"
   database_version    = var.sql_database_instance_version
   region              = var.region
   deletion_protection = var.sql_database_instance_deletion_protection
-  depends_on          = [google_service_networking_connection.webapp_service_networking_connection]
+  encryption_key_name = google_kms_crypto_key.sql_key.id
+  depends_on          = [google_service_networking_connection.webapp_service_networking_connection, google_project_iam_binding.clous_sql_admin, google_kms_crypto_key.sql_key]
   settings {
     tier = var.sql_database_instance_tier
 
@@ -309,13 +326,15 @@ resource "google_compute_region_instance_template" "csye6225_template" {
   machine_type   = var.instance_machine_type
   can_ip_forward = var.compute_instance_can_ip_forward
   tags           = var.tags
-  depends_on     = [google_project_iam_binding.logging_admin, google_project_iam_binding.monitoring_metric_writer]
+  depends_on     = [google_project_iam_binding.logging_admin, google_project_iam_binding.monitoring_metric_writer, google_kms_crypto_key.vm_key]
 
   disk {
     source_image = var.instance_app_image_family
     auto_delete  = var.compute_instance_auto_delete
     boot         = var.compute_instance_boot
-
+    disk_encryption_key {
+      kms_key_self_link = google_kms_crypto_key.vm_key.id
+    }
   }
 
   network_interface {
@@ -482,15 +501,121 @@ resource "google_compute_forwarding_rule" "lb_forwarding_rule" {
   network_tier          = var.lb_forwarding_rule_network_tier
 }
 
-# Output IP of load balancer
-output "load_balancer_IP" {
-  value = google_compute_address.lb_address.address
-}
-
 # Certificate
 resource "google_compute_region_ssl_certificate" "default" {
   region      = var.region
   name        = var.ssl_cert_name
   private_key = file(var.ssl_cert_private_key)
   certificate = file(var.ssl_cert_certificate)
+}
+
+# Key Management
+resource "google_service_account" "key_manager_account" {
+  account_id   = "key-manager"
+  display_name = "Key Manager"
+}
+
+resource "google_project_iam_binding" "cloud_kms_admin_role" {
+  project    = var.project
+  role       = "roles/cloudkms.admin"
+  depends_on = [google_service_account.key_manager_account]
+
+  members = [
+    "serviceAccount:${google_service_account.key_manager_account.email}"
+  ]
+}
+
+data "google_iam_policy" "admin" {
+  binding {
+    role = "roles/cloudkms.admin"
+
+    members = [
+      "serviceAccount:${google_service_account.key_manager_account.email}",
+    ]
+  }
+}
+
+# Key Ring
+resource "google_kms_key_ring" "abhinav_keyring" {
+  name     = "keyring-example-abhinav-${random_id.db_instance_name_suffix.hex}"
+  location = var.region
+}
+
+# Keys
+resource "google_kms_crypto_key" "vm_key" {
+  name            = "vm-key-abhinav"
+  key_ring        = google_kms_key_ring.abhinav_keyring.id
+  rotation_period = "2592000s"
+}
+
+resource "google_kms_crypto_key" "sql_key" {
+  name            = "sql-key-abhinav"
+  key_ring        = google_kms_key_ring.abhinav_keyring.id
+  rotation_period = "2592000s"
+}
+
+resource "google_kms_crypto_key" "bucket_key" {
+  name            = "bucket-key-abhinav"
+  key_ring        = google_kms_key_ring.abhinav_keyring.id
+  rotation_period = "2592000s"
+}
+
+resource "google_kms_crypto_key_iam_policy" "crypto_vm_key" {
+  crypto_key_id = google_kms_crypto_key.vm_key.id
+  policy_data = data.google_iam_policy.admin.policy_data
+}
+
+resource "google_kms_crypto_key_iam_policy" "crypto_sql_key" {
+  crypto_key_id = google_kms_crypto_key.sql_key.id
+  policy_data = data.google_iam_policy.admin.policy_data
+}
+
+resource "google_kms_crypto_key_iam_policy" "crypto_bucket_key" {
+  crypto_key_id = google_kms_crypto_key.bucket_key.id
+  policy_data = data.google_iam_policy.admin.policy_data
+}
+
+resource "google_storage_bucket" "my_bucket" {
+  name     = "serverless-function-abhinav-test"
+  location = var.region
+  project  = var.project
+  
+  depends_on = [ google_kms_crypto_key.bucket_key, google_kms_crypto_key_iam_policy.crypto_bucket_key ]
+
+  # Attach Customer-managed encryption keys (CMEK) to the bucket
+  encryption {
+    default_kms_key_name = google_kms_crypto_key.bucket_key.id
+  }
+
+  # Prevent the bucket from being destroyed by Terraform
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+# Outputs
+output "load_balancer_IP" {
+  value = google_compute_address.lb_address.address
+}
+
+output "sql_instance" {
+  value = google_sql_database_instance.database_instance.first_ip_address
+}
+
+output "sql_database" {
+  value = google_sql_database.database.name
+}
+
+output "sql_user" {
+  value = google_sql_user.users.name
+}
+
+output "sql_password" {
+  value = google_sql_user.users.password
+  sensitive = true
+}
+
+output "pubsub_service_account_private_key" {
+  value = base64decode(google_service_account_key.pubsub_publisher_key.private_key)
+  sensitive = true
 }

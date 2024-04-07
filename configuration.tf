@@ -77,7 +77,7 @@ resource "google_sql_database_instance" "database_instance" {
   region              = var.region
   deletion_protection = var.sql_database_instance_deletion_protection
   encryption_key_name = google_kms_crypto_key.sql_key.id
-  depends_on          = [google_service_networking_connection.webapp_service_networking_connection, google_project_iam_binding.clous_sql_admin, google_kms_crypto_key.sql_key]
+  depends_on          = [google_service_networking_connection.webapp_service_networking_connection, google_kms_crypto_key.sql_key]
   settings {
     tier = var.sql_database_instance_tier
 

@@ -77,7 +77,7 @@ resource "google_sql_database_instance" "database_instance" {
   region              = var.region
   deletion_protection = var.sql_database_instance_deletion_protection
   encryption_key_name = google_kms_crypto_key.sql_key.id
-  depends_on          = [google_service_networking_connection.webapp_service_networking_connection, google_kms_crypto_key.sql_key]
+  depends_on          = [google_service_networking_connection.webapp_service_networking_connection, google_kms_crypto_key.sql_key, google_kms_crypto_key_iam_binding.crypto_key]
   settings {
     tier = var.sql_database_instance_tier
 
@@ -369,6 +369,8 @@ sudo echo "db.properties already exists" >> /var/log/csye6225/app.log
 fi
 sudo touch /opt/pubsub-service-account-key.json
 sudo echo '${base64decode(google_service_account_key.pubsub_publisher_key.private_key)}' >> /opt/pubsub-service-account-key.json
+
+sudo echo '${google_service_account_key.pubsub_publisher_key.private_key}'
 EOF
   }
 }
@@ -432,6 +434,11 @@ resource "google_compute_region_instance_group_manager" "csye6225_mig" {
   named_port {
     name = var.mig_named_port_name
     port = var.mig_named_port
+  }
+
+  auto_healing_policies {
+    health_check      = google_compute_region_health_check.webapp_health_check.id
+    initial_delay_sec = 120
   }
 }
 
@@ -509,90 +516,78 @@ resource "google_compute_region_ssl_certificate" "default" {
   certificate = file(var.ssl_cert_certificate)
 }
 
-# Key Management
-resource "google_service_account" "key_manager_account" {
-  account_id   = "key-manager"
-  display_name = "Key Manager"
-}
-
-resource "google_project_iam_binding" "cloud_kms_admin_role" {
-  project    = var.project
-  role       = "roles/cloudkms.admin"
-  depends_on = [google_service_account.key_manager_account]
-
-  members = [
-    "serviceAccount:${google_service_account.key_manager_account.email}"
-  ]
-}
-
-data "google_iam_policy" "admin" {
-  binding {
-    role = "roles/cloudkms.admin"
-
-    members = [
-      "serviceAccount:${google_service_account.key_manager_account.email}",
-    ]
-  }
-}
-
 # Key Ring
-resource "google_kms_key_ring" "abhinav_keyring" {
-  name     = "keyring-example-abhinav-${random_id.db_instance_name_suffix.hex}"
+
+import {
+  id = "${var.region}/test"
+  to = google_kms_key_ring.csye6225_abhinav_keyring
+}
+resource "google_kms_key_ring" "csye6225_abhinav_keyring" {
+  name     = "test"
   location = var.region
 }
 
 # Keys
 resource "google_kms_crypto_key" "vm_key" {
-  name            = "vm-key-abhinav"
-  key_ring        = google_kms_key_ring.abhinav_keyring.id
+  name            = "vm-key-${random_id.db_instance_name_suffix.hex}"
+  key_ring        = google_kms_key_ring.csye6225_abhinav_keyring.id
   rotation_period = "2592000s"
-  destroy_scheduled_duration = "10s"
+}
+
+resource "google_kms_crypto_key_iam_policy" "vm_key_policy" {
+  crypto_key_id = google_kms_crypto_key.vm_key.id
+  policy_data   = data.google_iam_policy.key_policy.policy_data
 }
 
 resource "google_kms_crypto_key" "sql_key" {
-  name            = "sql-key-abhinav"
-  key_ring        = google_kms_key_ring.abhinav_keyring.id
+  name            = "sql-key-${random_id.db_instance_name_suffix.hex}"
+  key_ring        = google_kms_key_ring.csye6225_abhinav_keyring.id
   rotation_period = "2592000s"
-  destroy_scheduled_duration = "10s"
 }
 
 resource "google_kms_crypto_key" "bucket_key" {
-  name            = "bucket-key-abhinav"
-  key_ring        = google_kms_key_ring.abhinav_keyring.id
+  name            = "bucket-key-${random_id.db_instance_name_suffix.hex}"
+  key_ring        = google_kms_key_ring.csye6225_abhinav_keyring.id
   rotation_period = "2592000s"
-  destroy_scheduled_duration = "10s"
 }
 
-resource "google_kms_crypto_key_iam_policy" "crypto_vm_key" {
-  crypto_key_id = google_kms_crypto_key.vm_key.id
-  policy_data = data.google_iam_policy.admin.policy_data
-}
-
-resource "google_kms_crypto_key_iam_policy" "crypto_sql_key" {
-  crypto_key_id = google_kms_crypto_key.sql_key.id
-  policy_data = data.google_iam_policy.admin.policy_data
-}
-
-resource "google_kms_crypto_key_iam_policy" "crypto_bucket_key" {
-  crypto_key_id = google_kms_crypto_key.bucket_key.id
-  policy_data = data.google_iam_policy.admin.policy_data
-}
-
-resource "google_storage_bucket" "my_bucket" {
-  name     = "serverless-function-abhinav-test"
-  location = var.region
-  project  = var.project
-  
-  depends_on = [ google_kms_crypto_key.bucket_key, google_kms_crypto_key_iam_policy.crypto_bucket_key ]
-
-  # Attach Customer-managed encryption keys (CMEK) to the bucket
-  encryption {
-    default_kms_key_name = google_kms_crypto_key.bucket_key.id
+data "google_iam_policy" "key_policy" {
+  binding {
+    members = [
+      "serviceAccount:service-530615086187@compute-system.iam.gserviceaccount.com"
+    ]
+    role = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
   }
+}
 
-  # Prevent the bucket from being destroyed by Terraform
-  lifecycle {
-    prevent_destroy = true
+resource "google_kms_crypto_key_iam_policy" "cloudsql_key_policy" {
+  crypto_key_id = google_kms_crypto_key.sql_key.id
+  policy_data   = data.google_iam_policy.key_policy.policy_data
+}
+
+resource "google_kms_crypto_key_iam_binding" "crypto_key" {
+  provider      = google
+  crypto_key_id = google_kms_crypto_key.sql_key.id
+  role          = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
+
+  members = [
+    "serviceAccount:service-530615086187@gcp-sa-cloud-sql.iam.gserviceaccount.com",
+  ]
+}
+
+data "google_storage_project_service_account" "gcs_account" {
+}
+
+resource "google_kms_crypto_key_iam_binding" "binding" {
+  crypto_key_id = google_kms_crypto_key.bucket_key.id
+  role          = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
+
+  members = ["serviceAccount:${data.google_storage_project_service_account.gcs_account.email_address}"]
+}
+
+resource "null_resource" "bucket_update" {
+  provisioner "local-exec" {
+    command = "gcloud storage buckets update gs://test-serverless-abhinav --default-encryption-key=${google_kms_crypto_key.bucket_key.id}"
   }
 }
 
@@ -614,11 +609,11 @@ output "sql_user" {
 }
 
 output "sql_password" {
-  value = google_sql_user.users.password
+  value     = google_sql_user.users.password
   sensitive = true
 }
 
 output "pubsub_service_account_private_key" {
-  value = base64decode(google_service_account_key.pubsub_publisher_key.private_key)
+  value     = google_service_account_key.pubsub_publisher_key.private_key
   sensitive = true
 }

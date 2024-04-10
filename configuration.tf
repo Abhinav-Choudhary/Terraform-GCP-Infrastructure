@@ -590,7 +590,7 @@ resource "null_resource" "bucket_update" {
 
   depends_on = [google_kms_crypto_key_iam_binding.bucket_binding]
   provisioner "local-exec" {
-    command = "gcloud storage buckets update gs://test-serverless-abhinav --default-encryption-key=${google_kms_crypto_key.bucket_key.id}"
+    command = "gcloud storage buckets update gs://csye6225-serverless-function-abhinav --default-encryption-key=${google_kms_crypto_key.bucket_key.id}"
   }
 }
 

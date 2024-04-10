@@ -488,7 +488,7 @@ resource "google_compute_region_target_https_proxy" "lb_target_proxy" {
   name             = var.lb_target_proxy_name
   region           = var.region
   url_map          = google_compute_region_url_map.lb_url_map.id
-  ssl_certificates = [google_compute_region_ssl_certificate.default.id]
+  ssl_certificates = [google_compute_region_ssl_certificate.namecheap_cert.id]
 }
 
 # Creating a forwarding rule
@@ -509,7 +509,7 @@ resource "google_compute_forwarding_rule" "lb_forwarding_rule" {
 }
 
 # Certificate
-resource "google_compute_region_ssl_certificate" "default" {
+resource "google_compute_region_ssl_certificate" "namecheap_cert" {
   region      = var.region
   name        = var.ssl_cert_name
   private_key = file(var.ssl_cert_private_key)

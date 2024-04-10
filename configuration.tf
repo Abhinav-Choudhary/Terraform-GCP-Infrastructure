@@ -77,7 +77,7 @@ resource "google_sql_database_instance" "database_instance" {
   region              = var.region
   deletion_protection = var.sql_database_instance_deletion_protection
   encryption_key_name = google_kms_crypto_key.sql_key.id
-  depends_on          = [google_service_networking_connection.webapp_service_networking_connection, google_kms_crypto_key.sql_key, google_kms_crypto_key_iam_binding.crypto_key]
+  depends_on          = [google_service_networking_connection.webapp_service_networking_connection, google_kms_crypto_key.sql_key, google_kms_crypto_key_iam_binding.crypto_sql_key]
   settings {
     tier = var.sql_database_instance_tier
 
@@ -517,13 +517,8 @@ resource "google_compute_region_ssl_certificate" "namecheap_cert" {
 }
 
 # Key Ring
-
-import {
-  id = "${var.region}/test"
-  to = google_kms_key_ring.csye6225_abhinav_keyring
-}
 resource "google_kms_key_ring" "csye6225_abhinav_keyring" {
-  name     = "test"
+  name     = "csye6225-abhinav-${random_id.db_instance_name_suffix.hex}"
   location = var.region
 }
 
@@ -532,23 +527,27 @@ resource "google_kms_crypto_key" "vm_key" {
   name            = "vm-key-${random_id.db_instance_name_suffix.hex}"
   key_ring        = google_kms_key_ring.csye6225_abhinav_keyring.id
   rotation_period = "2592000s"
+  depends_on      = [google_kms_key_ring.csye6225_abhinav_keyring]
 }
 
 resource "google_kms_crypto_key_iam_policy" "vm_key_policy" {
   crypto_key_id = google_kms_crypto_key.vm_key.id
   policy_data   = data.google_iam_policy.key_policy.policy_data
+  depends_on    = [google_kms_crypto_key.vm_key]
 }
 
 resource "google_kms_crypto_key" "sql_key" {
   name            = "sql-key-${random_id.db_instance_name_suffix.hex}"
   key_ring        = google_kms_key_ring.csye6225_abhinav_keyring.id
   rotation_period = "2592000s"
+  depends_on      = [google_kms_crypto_key_iam_policy.vm_key_policy, google_kms_key_ring.csye6225_abhinav_keyring]
 }
 
 resource "google_kms_crypto_key" "bucket_key" {
   name            = "bucket-key-${random_id.db_instance_name_suffix.hex}"
   key_ring        = google_kms_key_ring.csye6225_abhinav_keyring.id
   rotation_period = "2592000s"
+  depends_on      = [google_kms_key_ring.csye6225_abhinav_keyring]
 }
 
 data "google_iam_policy" "key_policy" {
@@ -563,12 +562,14 @@ data "google_iam_policy" "key_policy" {
 resource "google_kms_crypto_key_iam_policy" "cloudsql_key_policy" {
   crypto_key_id = google_kms_crypto_key.sql_key.id
   policy_data   = data.google_iam_policy.key_policy.policy_data
+  depends_on    = [google_kms_crypto_key.sql_key]
 }
 
-resource "google_kms_crypto_key_iam_binding" "crypto_key" {
+resource "google_kms_crypto_key_iam_binding" "crypto_sql_key" {
   provider      = google
   crypto_key_id = google_kms_crypto_key.sql_key.id
   role          = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
+  depends_on    = [google_kms_crypto_key_iam_policy.cloudsql_key_policy]
 
   members = [
     "serviceAccount:service-530615086187@gcp-sa-cloud-sql.iam.gserviceaccount.com",
@@ -578,7 +579,7 @@ resource "google_kms_crypto_key_iam_binding" "crypto_key" {
 data "google_storage_project_service_account" "gcs_account" {
 }
 
-resource "google_kms_crypto_key_iam_binding" "binding" {
+resource "google_kms_crypto_key_iam_binding" "bucket_binding" {
   crypto_key_id = google_kms_crypto_key.bucket_key.id
   role          = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
 
@@ -586,6 +587,8 @@ resource "google_kms_crypto_key_iam_binding" "binding" {
 }
 
 resource "null_resource" "bucket_update" {
+
+  depends_on = [google_kms_crypto_key_iam_binding.bucket_binding]
   provisioner "local-exec" {
     command = "gcloud storage buckets update gs://test-serverless-abhinav --default-encryption-key=${google_kms_crypto_key.bucket_key.id}"
   }

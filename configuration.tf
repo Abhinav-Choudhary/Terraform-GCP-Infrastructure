@@ -518,7 +518,7 @@ resource "google_compute_region_ssl_certificate" "namecheap_cert" {
 
 # Key Ring
 resource "google_kms_key_ring" "csye6225_abhinav_keyring" {
-  name     = "csye6225-abhinav-${random_id.db_instance_name_suffix.hex}"
+  name     = "key-ring-${random_id.db_instance_name_suffix.hex}"
   location = var.region
 }
 
@@ -526,7 +526,7 @@ resource "google_kms_key_ring" "csye6225_abhinav_keyring" {
 resource "google_kms_crypto_key" "vm_key" {
   name            = "vm-key-${random_id.db_instance_name_suffix.hex}"
   key_ring        = google_kms_key_ring.csye6225_abhinav_keyring.id
-  rotation_period = "2592000s"
+  rotation_period = var.crypto_key_rotation_period
   depends_on      = [google_kms_key_ring.csye6225_abhinav_keyring]
 }
 
@@ -539,23 +539,23 @@ resource "google_kms_crypto_key_iam_policy" "vm_key_policy" {
 resource "google_kms_crypto_key" "sql_key" {
   name            = "sql-key-${random_id.db_instance_name_suffix.hex}"
   key_ring        = google_kms_key_ring.csye6225_abhinav_keyring.id
-  rotation_period = "2592000s"
+  rotation_period = var.crypto_key_rotation_period
   depends_on      = [google_kms_crypto_key_iam_policy.vm_key_policy, google_kms_key_ring.csye6225_abhinav_keyring]
 }
 
 resource "google_kms_crypto_key" "bucket_key" {
   name            = "bucket-key-${random_id.db_instance_name_suffix.hex}"
   key_ring        = google_kms_key_ring.csye6225_abhinav_keyring.id
-  rotation_period = "2592000s"
+  rotation_period = var.crypto_key_rotation_period
   depends_on      = [google_kms_key_ring.csye6225_abhinav_keyring]
 }
 
 data "google_iam_policy" "key_policy" {
   binding {
     members = [
-      "serviceAccount:service-530615086187@compute-system.iam.gserviceaccount.com"
+      "serviceAccount:${var.compute_system_service_account}"
     ]
-    role = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
+    role = var.cloud_key_encrypter_decrypter_role
   }
 }
 
@@ -568,11 +568,11 @@ resource "google_kms_crypto_key_iam_policy" "cloudsql_key_policy" {
 resource "google_kms_crypto_key_iam_binding" "crypto_sql_key" {
   provider      = google
   crypto_key_id = google_kms_crypto_key.sql_key.id
-  role          = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
+  role          = var.cloud_key_encrypter_decrypter_role
   depends_on    = [google_kms_crypto_key_iam_policy.cloudsql_key_policy]
 
   members = [
-    "serviceAccount:service-530615086187@gcp-sa-cloud-sql.iam.gserviceaccount.com",
+    "serviceAccount:${var.compute_system_sql_account}",
   ]
 }
 
@@ -581,7 +581,7 @@ data "google_storage_project_service_account" "gcs_account" {
 
 resource "google_kms_crypto_key_iam_binding" "bucket_binding" {
   crypto_key_id = google_kms_crypto_key.bucket_key.id
-  role          = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
+  role          = var.cloud_key_encrypter_decrypter_role
 
   members = ["serviceAccount:${data.google_storage_project_service_account.gcs_account.email_address}"]
 }
@@ -590,7 +590,7 @@ resource "null_resource" "bucket_update" {
 
   depends_on = [google_kms_crypto_key_iam_binding.bucket_binding]
   provisioner "local-exec" {
-    command = "gcloud storage buckets update gs://csye6225-serverless-function-abhinav --default-encryption-key=${google_kms_crypto_key.bucket_key.id}"
+    command = "gcloud storage buckets update gs://${var.cloud_function_source_bucket} --default-encryption-key=${google_kms_crypto_key.bucket_key.id}"
   }
 }
 

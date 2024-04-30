@@ -1,7 +1,7 @@
 variable "project" {
   type        = string
   description = "GCP Project ID"
-  default     = "csye6225-abhinav-dev"
+  default     = "your-project-id"
 }
 
 variable "region" {
@@ -13,7 +13,7 @@ variable "region" {
 variable "network_name" {
   type        = string
   description = "Network Name"
-  default     = "abhinav-vpc"
+  default     = "your-network"
 }
 
 variable "routing_mode" {
@@ -355,7 +355,7 @@ variable "compute_instance_service_account_scopes" {
 variable "dns_a_record_name" {
   type        = string
   description = "Domain name for A record"
-  default     = "choudhary-abhinav.me."
+  default     = "your-dns-a-record"
 }
 
 variable "dns_a_record_type" {
@@ -373,7 +373,7 @@ variable "dns_a_record_ttl" {
 variable "dns_a_record_managed_zone" {
   type        = string
   description = "DNS name for zone"
-  default     = "choudhary-abhinav"
+  default     = "your-dns-name"
 }
 
 variable "pubsub_publisher_account_id" {
@@ -439,7 +439,7 @@ variable "cloud_function_entry_point" {
 variable "cloud_function_source_bucket" {
   type        = string
   description = "Source bucket for Webapp GCP cloud function"
-  default     = "serverless-function-abhinav"
+  default     = "serverless-function"
 }
 
 variable "cloud_function_source_object" {
@@ -481,25 +481,25 @@ variable "cloud_function_env_smtp_port" {
 variable "cloud_function_env_smtp_username" {
   type        = string
   description = "SMTP Username Env variable for Webapp GCP cloud function"
-  default     = "postmaster@mail.choudhary-abhinav.me"
+  default     = "postmaster@your-smtp-username"
 }
 
 variable "cloud_function_env_smtp_password" {
   type        = string
   description = "SMTP Password Env variable for Webapp GCP cloud function"
-  default     = "df156c1458e29cddb1bf9bed1fdef297-f68a26c9-5ba9a9f5"
+  default     = "smtp_password"
 }
 
 variable "cloud_function_env_smtp_verification_link" {
   type        = string
   description = "SMTP Verification Link Env variable for Webapp GCP cloud function"
-  default     = "https://choudhary-abhinav.me/v1/verify"
+  default     = "https://example.com/v2/verify"
 }
 
 variable "cloud_function_env_smtp_email" {
   type        = string
   description = "SMTP Email Env variable for Webapp GCP cloud function"
-  default     = "no-reply@choudhary-abhinav.me"
+  default     = "no-reply@example.com"
 }
 
 variable "cloud_function_env_db_table" {
@@ -799,17 +799,41 @@ variable "lb_forwarding_rule_network_tier" {
 variable "ssl_cert_name" {
   type        = string
   description = "Name for ssl certificate"
-  default     = "abhinav-certificate"
+  default     = "your-certificate"
 }
 
 variable "ssl_cert_certificate" {
   type        = string
   description = "Certificate path for ssl certificate"
-  default     = "D:\\Northeastern\\Courses\\cloud\\certificate\\choudhary-abhinav_me.crt"
+  default     = "location-to-your-cert-file"
 }
 
 variable "ssl_cert_private_key" {
   type        = string
   description = "Certificate path for ssl certificate"
-  default     = "D:\\Northeastern\\Courses\\cloud\\certificate\\privateKey.pem"
+  default     = "location-to-your-pem-file"
+}
+
+variable "crypto_key_rotation_period" {
+  type        = string
+  description = "Rotation period for crypto keys"
+  default     = "2592000s"
+}
+
+variable "compute_system_service_account" {
+  type        = string
+  description = "Compute System service account"
+  default     = "service-530615086187@compute-system.iam.gserviceaccount.com"
+}
+
+variable "cloud_key_encrypter_decrypter_role" {
+  type        = string
+  description = "Crypto key encrypter decrypter role for cloud keys"
+  default     = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
+}
+
+variable "compute_system_sql_account" {
+  type        = string
+  description = "Compute System sql account"
+  default     = "service-530615086187@gcp-sa-cloud-sql.iam.gserviceaccount.com"
 }

@@ -3,8 +3,10 @@ Repository for course CSYE 6225 Network Structures and Cloud Computing offered b
 
 # Linked Repositories
 Explore the 2 additional repositories that complement this project, housing code for the REST-based CRUD operations APIs (Webapp) crafted in Java Enterprise Edition (J2EE), and the Serverless Lambda function implemented in Python.
-
+## Webapp
 [Webapp](https://github.com/Abhinav-Choudhary/Webapp)
+
+## Serverless
 [Serverless Lambda](https://github.com/Abhinav-Choudhary/Serverless)
 
 # Enabled Api's
